@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sweet Haven | Premium Cotton Candy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ================= PUBLIC SITE ================= -->
+    <div id="publicSite">
+        <nav class="navbar">
+            <div class="nav-logo">Sweet Haven 🍭</div>
+            <div class="nav-links">
+                <a href="#products">Menu</a>
+                <a href="#why-us">Why Us</a>
+                <a href="#" onclick="openOrderModal('Custom Order', 0)" class="nav-order-btn">Order Now</a>
+            </div>
+        </nav>
+
+        <header class="hero">
+            <div class="hero-content">
+                <img src="logo2.png" alt="Sweet Haven Logo" class="main-logo">
+                <h1 class="hero-title">Sweet Moments, <br>Made Fresh.</h1>
+                <p class="hero-subtitle">Bungoma's Premium Cotton Candy Experience</p>
+                <div class="hero-price-badge">Mini Cup — KSh 100 | Maxi Cup — KSh 159</div>
+                
+                <div class="hero-buttons">
+                    <button onclick="openOrderModal('Custom Order', 0)" class="btn btn-primary">🛒 Order Now</button>
+                    <a href="#location" class="btn btn-outline">📍 Find Us</a>
+                </div>
+            </div>
+        </header>
+
+        <section id="products" class="section">
+            <h2 class="section-title">Our Signature Treats</h2>
+            <p class="section-subtitle">Handcrafted with love and premium ingredients.</p>
+            
+            <div class="product-grid">
+                <div class="product-card">
+                    <div class="badge">Best Seller</div>
+                    <img src="https://images.unsplash.com/photo-1575224300306-1b8da36134ec?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Mini Cup" class="product-img">
+                    <h3 class="product-title">MINI CUP</h3>
+                    <p class="product-desc">Small & sweet, perfect for a quick treat.</p>
+                    <div class="product-price">KSh 100</div>
+                    <button onclick="openOrderModal('Mini Cup', 100)" class="btn btn-order">Order Now →</button>
+                </div>
+
+                <div class="product-card">
+                    <div class="badge" style="background:var(--yellow); color:#000;">Popular</div>
+                    <img src="https://images.unsplash.com/photo-1601000938259-9e92002320b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Maxi Cup" class="product-img">
+                    <h3 class="product-title">MAXI CUP</h3>
+                    <p class="product-desc">Bigger serving, bigger sweetness.</p>
+                    <div class="product-price">KSh 159</div>
+                    <button onclick="openOrderModal('Maxi Cup', 159)" class="btn btn-order">Order Now →</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="combo-banner">
+                <h2>Countrywide Delivery 🚚</h2>
+                <p>We deliver anywhere in Kenya 🇰🇪<br><small>Delivery charges depend on your location.</small></p>
+                <button onclick="openOrderModal('Delivery Inquiry', 0)" class="btn btn-dark">Inquire About Delivery</button>
+            </div>
+        </section>
+
+        <section id="why-us" class="section">
+            <h2 class="section-title">Why You'll Love Us</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🍭</div>
+                    <div class="feature-title">Fresh & Delicious</div>
+                    <div class="feature-desc">Made daily for sweet moments.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🇰🇪</div>
+                    <div class="feature-title">Countrywide Delivery</div>
+                    <div class="feature-desc">Wherever you are in Kenya.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <div class="feature-title">Bungoma Based</div>
+                    <div class="feature-desc">Find us in Bungoma Town.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <div class="feature-title">Easy Ordering</div>
+                    <div class="feature-desc">Direct WhatsApp integration.</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="location" class="section">
+            <div class="location-box">
+                <h3>Visit Sweet Haven</h3>
+                <p>📍 Bungoma Town, Kenya</p>
+                <p>🕗 Opening Hours: 8:00 AM – 5:00 PM</p>
+                <a href="https://maps.google.com/?q=Bungoma+Town,+Kenya" target="_blank" class="btn btn-primary">📍 Get Directions</a>
+                <div class="social-links">
+                    <a href="https://instagram.com/sweethaven" target="_blank" class="social-btn">📸 Instagram</a>
+                    <a href="https://www.tiktok.com/@sweet.havenke" target="_blank" class="social-btn">🎵 TikTok</a>
+                </div>
+            </div>
+        </section>
+
+        <div style="text-align: center; padding: 20px;">
+            <a href="#" onclick="showOwnerLogin()" style="color: #aaa; font-size: 0.8rem; text-decoration: none;">Owner Login</a>
+        </div>
+
+        <footer>
+            <p>Website concept by <strong>JENGA WEB</strong> | We build, you grow.</p>
+        </footer>
+    </div>
+
+    <!-- ================= OWNER SITE (LOGIN & DASHBOARD) ================= -->
+    <div id="ownerSite" style="display: none;">
+        <nav class="navbar owner-nav">
+            <div class="nav-logo" style="color: var(--dark-blue);">Sweet Haven Admin 🛡️</div>
+            <div class="nav-links">
+                <a href="#" onclick="logoutOwner()" class="nav-order-btn" style="background: #e53935;">Logout</a>
+            </div>
+        </nav>
+
+        <div id="ownerLoginBox" class="owner-container">
+            <div class="login-card">
+                <h2 style="color: var(--dark-blue); text-align: center; margin-bottom: 20px;">Owner Dashboard Login</h2>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="ownerPassword" placeholder="Enter password" class="form-input">
+                </div>
+                <button onclick="loginOwner()" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Login</button>
+                <p style="font-size: 0.7rem; color: #888; text-align: center; margin-top: 15px;">Demo Password: admin123</p>
+            </div>
+        </div>
+
+        <div id="ownerDashboardBox" class="owner-container" style="display: none;">
+            <div class="dashboard-header">
+                <h2>Order Management & Accounting</h2>
+                <button onclick="exportCSV()" class="btn btn-dark" style="padding: 10px 20px; font-size: 0.9rem;">📥 Export CSV</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Revenue</h4>
+                    <p id="statRevenue">KSh 0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Total Orders</h4>
+                    <p id="statOrders">0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Pending Orders</h4>
+                    <p id="statPending">0</p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Order ID</th>
+                            <th>Customer Phone</th>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Type</th>
+                            <th>Destination</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <tr><td colspan="10" style="text-align: center; color: #888;">No orders yet.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ORDER MODAL ================= -->
+    <div id="orderModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeOrderModal()">&times;</span>
+            <h2 style="color: var(--deep-pink); margin-bottom: 5px;">Complete Your Order</h2>
+            <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Fill in the details to generate your receipt.</p>
+            
+            <div class="form-group">
+                <label>Product:</label>
+                <input type="text" id="modalProductName" class="form-input" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label>Quantity:</label>
+                <div class="qty-control">
+                    <button onclick="changeQty(-1)">-</button>
+                    <input type="number" id="modalQuantity" value="1" min="1" readonly>
+                    <button onclick="changeQty(1)">+</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Your Phone Number:</label>
+                <input type="tel" id="modalPhone" placeholder="e.g., 0712 345 678" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label>Order Type:</label>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="orderType" value="Pickup" checked onchange="toggleDestination()"> Pickup (Bungoma)</label>
+                    <label class="radio-label"><input type="radio" name="orderType" value="Delivery" onchange="toggleDestination()"> Delivery</label>
+                </div>
+            </div>
+
+            <div class="form-group" id="destinationGroup" style="display: none;">
+                <label>Delivery Destination:</label>
+                <input type="text" id="modalDestination" placeholder="e.g., Bungoma Town, Kanduyi..." class="form-input">
+            </div>
+
+            <div class="total-box">
+                <span>Total:</span>
+                <span id="modalTotalPrice">KSh 0</span>
+            </div>
+
+            <button onclick="submitOrder()" class="btn btn-whatsapp" style="width: 100%; margin-top: 15px;">
+                🟢 Send Order to WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
