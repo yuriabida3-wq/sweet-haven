@@ -9,7 +9,6 @@
 </head>
 <body>
 
-    <!-- Floating Candy Background -->
     <div class="candy-bg" id="candyBg"></div>
 
     <!-- ================= PUBLIC SITE ================= -->
@@ -29,7 +28,6 @@
                 <h1 class="hero-title">Sweet Moments, <br>Made Fresh.</h1>
                 <p class="hero-subtitle">Bungoma's Premium Cotton Candy Experience</p>
                 <div class="hero-price-badge">Mini Cup — KSh 100 | Maxi Cup — KSh 159</div>
-                
                 <div class="hero-buttons">
                     <button onclick="openOrderModal('Custom Order', 0)" class="btn btn-primary">🛒 Order Now</button>
                     <a href="#location" class="btn btn-outline">📍 Find Us</a>
@@ -108,7 +106,6 @@
                 <button onclick="showTab('productsTab')" id="btnProducts" class="tab-btn">Manage Products</button>
             </div>
 
-            <!-- ORDERS TAB -->
             <div id="ordersTab" class="tab-content">
                 <div class="stats-grid">
                     <div class="stat-card"><h4>Total Revenue</h4><p id="statRevenue">KSh 0</p></div>
@@ -135,7 +132,6 @@
                 </div>
             </div>
 
-            <!-- PRODUCTS TAB -->
             <div id="productsTab" class="tab-content" style="display: none;">
                 <div class="product-manager-layout">
                     <div class="manager-form">
@@ -203,6 +199,23 @@
             <div class="thank-you-summary" id="thankYouSummary"></div>
             <button onclick="sendWhatsAppFromThankYou()" class="btn btn-whatsapp" style="width: 100%; margin-top: 20px;">🟢 Send Order to WhatsApp</button>
             <button onclick="closeThankYou()" class="btn btn-outline" style="width: 100%; margin-top: 10px; border-color: #ddd; color: #888;">Close</button>
+        </div>
+    </div>
+
+    <!-- SEQUENTIAL SENDER PANEL -->
+    <div id="bulkPanel" class="bulk-panel" style="display:none;">
+        <div class="bulk-panel-header">
+            <h3>📤 Sending Messages</h3>
+            <span class="close-btn" onclick="closeBulkPanel()">&times;</span>
+        </div>
+        <div class="bulk-panel-body">
+            <div class="progress-track">
+                <div id="bulkProgressBar" class="progress-fill"></div>
+            </div>
+            <p id="bulkProgressText" class="bulk-progress-text">Ready</p>
+            <div id="bulkCurrentOrder" class="bulk-current-order"></div>
+            <button id="bulkNextBtn" onclick="sendNextInQueue()" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Send to First Customer →</button>
+            <button onclick="closeBulkPanel()" class="btn btn-outline" style="width: 100%; margin-top: 10px; border-color: #ddd; color: #888;">Cancel</button>
         </div>
     </div>
 
