@@ -1,5 +1,5 @@
 // ==========================================
-// EDIT THESE TWO LINES WITH YOUR REAL VALUES
+// EDIT THESE TWO LINES WITH YOUR JSONBIN CREDENTIALS
 // ==========================================
 const JSONBIN_BIN_ID = '6aac1335ffd5d1605312a216';
 const JSONBIN_MASTER_KEY = '$2a$10$bFPLjGCZET3w56jqQ8FUjeMpkOuUbyGh05TFWq/ZxNWkfPUpS0BRi';
@@ -19,9 +19,7 @@ const defaultProducts = [
     { id: 'p2', name: 'Maxi Cup', price: 159, desc: 'Bigger serving, bigger sweetness.', image: 'https://images.unsplash.com/photo-1601000938259-9e92002320b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', offer: 'Popular' }
 ];
 
-// ==========================================
-// CLOUD FUNCTIONS (DO NOT EDIT BELOW)
-// ==========================================
+// ---- CLOUD FUNCTIONS ----
 async function loadProductsFromCloud() {
     try {
         const res = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID + '/latest', {
@@ -216,15 +214,9 @@ function renderOwnerOrders() {
     document.getElementById('statPending').innerText = pendingCount;
 }
 
-function buildPendingMessage(order) {
-    return `Hi! 👋 Thank you for your order at *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n⏳ Your order is currently being reviewed. We'll notify you once it's confirmed. Please wait a moment! 💕`;
-}
-function buildConfirmedMessage(order) {
-    return `Hi! 👋 Great news from *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n✅ We have *received* your order and it's been confirmed! We'll update you once it's on the way. Thank you! 💕`;
-}
-function buildCompletedMessage(order) {
-    return `Hi! 👋 Thank you so much for choosing *Sweet Haven* 🍭💕\n\nYour order *${order.id}* has been *completed*. We hope you enjoy your cotton candy! 🍬✨\n\nWe'd love it if you could share your experience with us on TikTok or Instagram. See you again soon! 🎉`;
-}
+function buildPendingMessage(order) { return `Hi! 👋 Thank you for your order at *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n⏳ Your order is currently being reviewed. We'll notify you once it's confirmed. Please wait a moment! 💕`; }
+function buildConfirmedMessage(order) { return `Hi! 👋 Great news from *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n✅ We have *received* your order and it's been confirmed! We'll update you once it's on the way. Thank you! 💕`; }
+function buildCompletedMessage(order) { return `Hi! 👋 Thank you so much for choosing *Sweet Haven* 🍭💕\n\nYour order *${order.id}* has been *completed*. We hope you enjoy your cotton candy! 🍬✨\n\nWe'd love it if you could share your experience with us on TikTok or Instagram. See you again soon! 🎉`; }
 
 function sendStatusMsg(index, statusType) {
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
@@ -256,19 +248,14 @@ function markCompleted(index) {
     }
 }
 
-function toggleSelectAll(checkbox) {
-    document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = checkbox.checked);
-}
+function toggleSelectAll(checkbox) { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = checkbox.checked); }
 
 function bulkSendPending() {
     const selected = document.querySelectorAll('.order-checkbox:checked');
     if (selected.length === 0) { alert('Please select at least one order.'); return; }
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     bulkQueue = [];
-    selected.forEach(cb => {
-        const index = parseInt(cb.dataset.index);
-        if (orders[index]) bulkQueue.push(orders[index]);
-    });
+    selected.forEach(cb => { const index = parseInt(cb.dataset.index); if (orders[index]) bulkQueue.push(orders[index]); });
     if (bulkQueue.length === 0) { alert('No valid orders found.'); return; }
     bulkIndex = 0;
     document.getElementById('bulkPanel').style.display = 'block';
@@ -308,11 +295,7 @@ function sendNextInQueue() {
     updateBulkPanel();
 }
 
-function closeBulkPanel() {
-    document.getElementById('bulkPanel').style.display = 'none';
-    bulkQueue = [];
-    bulkIndex = 0;
-}
+function closeBulkPanel() { document.getElementById('bulkPanel').style.display = 'none'; bulkQueue = []; bulkIndex = 0; }
 
 function exportCSV() {
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
@@ -323,9 +306,7 @@ function exportCSV() {
     orders.forEach(function(order) {
         const amt = parseFloat(order.total) || 0;
         totalRevenue += amt;
-        if (order.status === 'Pending') pending++;
-        else if (order.status === 'Confirmed') confirmed++;
-        else if (order.status === 'Completed') completed++;
+        if (order.status === 'Pending') pending++; else if (order.status === 'Confirmed') confirmed++; else if (order.status === 'Completed') completed++;
         if (order.type === 'Delivery') { deliveryCount++; deliveryTotal += amt; } else pickupCount++;
         if (!itemTotals[order.item]) itemTotals[order.item] = { qty: 0, revenue: 0 };
         itemTotals[order.item].qty += parseInt(order.qty) || 0;
@@ -337,33 +318,20 @@ function exportCSV() {
     csv += 'Report Generated,' + today + '\n';
     csv += 'Business Location,"Bungoma Town, Kenya"\n';
     csv += 'Contact,0740 503 058\n\n';
-    csv += 'FINANCIAL SUMMARY\n';
-    csv += 'Metric,Value\n';
+    csv += 'FINANCIAL SUMMARY\nMetric,Value\n';
     csv += 'Total Revenue (KSh),' + totalRevenue.toFixed(2) + '\n';
     csv += 'Total Orders,' + orders.length + '\n';
     csv += 'Average Order Value (KSh),' + (orders.length > 0 ? (totalRevenue / orders.length).toFixed(2) : '0.00') + '\n\n';
-    csv += 'ORDER STATUS BREAKDOWN\n';
-    csv += 'Status,Count\n';
-    csv += 'Pending,' + pending + '\n';
-    csv += 'Confirmed,' + confirmed + '\n';
-    csv += 'Completed,' + completed + '\n\n';
-    csv += 'ORDER TYPE BREAKDOWN\n';
-    csv += 'Type,Count,Revenue (KSh)\n';
-    csv += 'Pickup,' + pickupCount + ',' + (totalRevenue - deliveryTotal).toFixed(2) + '\n';
-    csv += 'Delivery,' + deliveryCount + ',' + deliveryTotal.toFixed(2) + '\n\n';
-    csv += 'SALES BY PRODUCT\n';
-    csv += 'Product,Quantity Sold,Revenue (KSh)\n';
-    Object.keys(itemTotals).forEach(function(item) {
-        csv += '"' + item + '",' + itemTotals[item].qty + ',' + itemTotals[item].revenue.toFixed(2) + '\n';
-    });
-    csv += '\nITEMIZED ORDERS\n';
-    csv += 'Date,Order ID,Customer Phone,Item,Quantity,Order Type,Delivery Destination,Unit Price (KSh),Total (KSh),Status\n';
+    csv += 'ORDER STATUS BREAKDOWN\nStatus,Count\nPending,' + pending + '\nConfirmed,' + confirmed + '\nCompleted,' + completed + '\n\n';
+    csv += 'ORDER TYPE BREAKDOWN\nType,Count,Revenue (KSh)\nPickup,' + pickupCount + ',' + (totalRevenue - deliveryTotal).toFixed(2) + '\nDelivery,' + deliveryCount + ',' + deliveryTotal.toFixed(2) + '\n\n';
+    csv += 'SALES BY PRODUCT\nProduct,Quantity Sold,Revenue (KSh)\n';
+    Object.keys(itemTotals).forEach(function(item) { csv += '"' + item + '",' + itemTotals[item].qty + ',' + itemTotals[item].revenue.toFixed(2) + '\n'; });
+    csv += '\nITEMIZED ORDERS\nDate,Order ID,Customer Phone,Item,Quantity,Order Type,Delivery Destination,Unit Price (KSh),Total (KSh),Status\n';
     orders.forEach(function(order) {
         const unitPrice = order.qty > 0 ? (parseFloat(order.total) / parseInt(order.qty)).toFixed(2) : '0.00';
         csv += ['"' + order.date + '"', '"' + order.id + '"', '"' + order.phone + '"', '"' + order.item + '"', order.qty, order.type, '"' + (order.destination || 'N/A') + '"', unitPrice, parseFloat(order.total).toFixed(2), order.status].join(',') + '\n';
     });
-    csv += '\nGRAND TOTAL,' + totalRevenue.toFixed(2) + '\n\n';
-    csv += 'Generated by JENGA WEB - We build, you grow.\n';
+    csv += '\nGRAND TOTAL,' + totalRevenue.toFixed(2) + '\n\nGenerated by JENGA WEB - We build, you grow.\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -371,9 +339,7 @@ function exportCSV() {
     link.setAttribute('href', url);
     link.setAttribute('download', 'Sweet_Haven_Sales_Report_' + fileDate + '.csv');
     link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 function renderDashboardProducts() {
@@ -388,6 +354,7 @@ function renderDashboardProducts() {
         </div>
     `).join('');
 }
+
 function previewImage(event) { const reader = new FileReader(); reader.onload = function(){ const output = document.getElementById('imagePreview'); output.src = reader.result; output.style.display = 'block'; base64Image = reader.result; }; if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]); }
 
 async function saveProduct() {
@@ -401,7 +368,6 @@ async function saveProduct() {
     if (!imageUrl) { if (editingProductId) { const existing = products.find(p => p.id === editingProductId); if (existing) imageUrl = existing.image; } else { imageUrl = 'https://via.placeholder.com/300x200?text=Sweet+Haven'; } }
     if (editingProductId) { const index = products.findIndex(p => p.id === editingProductId); if (index !== -1) { products[index] = { ...products[index], name, price: Number(price), desc, offer, image: imageUrl }; } }
     else { const newId = 'p' + Date.now(); products.push({ id: newId, name, price: Number(price), desc, offer, image: imageUrl }); }
-
     await saveProductsToCloud(products);
     clearForm(); renderDashboardProducts(); renderStoreProducts(products);
     alert('✅ Product saved to cloud! Customers will see this update.');
