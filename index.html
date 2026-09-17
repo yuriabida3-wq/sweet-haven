@@ -9,6 +9,9 @@
 </head>
 <body>
 
+    <!-- Floating Candy Background -->
+    <div class="candy-bg" id="candyBg"></div>
+
     <!-- ================= PUBLIC SITE ================= -->
     <div id="publicSite">
         <nav class="navbar">
@@ -22,7 +25,7 @@
 
         <header class="hero">
             <div class="hero-content">
-                <img src="logo2.png" alt="Sweet Haven Logo" class="main-logo">
+                <img src="logo3.png" alt="Sweet Haven Logo" class="main-logo">
                 <h1 class="hero-title">Sweet Moments, <br>Made Fresh.</h1>
                 <p class="hero-subtitle">Bungoma's Premium Cotton Candy Experience</p>
                 <div class="hero-price-badge">Mini Cup — KSh 100 | Maxi Cup — KSh 159</div>
@@ -72,7 +75,7 @@
         </section>
 
         <div style="text-align: center; padding: 20px;">
-            <a href="#" onclick="showOwnerLogin()" style="color: #aaa; font-size: 0.8rem; text-decoration: none;">Owner Login</a>
+            <a href="#" onclick="showOwnerLogin()" style="color: #d8a0b8; font-size: 0.8rem; text-decoration: none;">Owner Login</a>
         </div>
 
         <footer><p>Website concept by <strong>JENGA WEB</strong> | We build, you grow.</p></footer>
@@ -81,7 +84,7 @@
     <!-- ================= OWNER SITE ================= -->
     <div id="ownerSite" style="display: none;">
         <nav class="navbar owner-nav">
-            <div class="nav-logo" style="color: var(--dark-blue);">Sweet Haven Admin 🛡️</div>
+            <div class="nav-logo" style="color: #fff;">Sweet Haven Admin 🛡️</div>
             <div class="nav-links"><a href="#" onclick="logoutOwner()" class="nav-order-btn" style="background: #e53935;">Logout</a></div>
         </nav>
 
@@ -105,22 +108,34 @@
                 <button onclick="showTab('productsTab')" id="btnProducts" class="tab-btn">Manage Products</button>
             </div>
 
+            <!-- ORDERS TAB -->
             <div id="ordersTab" class="tab-content">
                 <div class="stats-grid">
                     <div class="stat-card"><h4>Total Revenue</h4><p id="statRevenue">KSh 0</p></div>
                     <div class="stat-card"><h4>Total Orders</h4><p id="statOrders">0</p></div>
                     <div class="stat-card"><h4>Pending Orders</h4><p id="statPending">0</p></div>
                 </div>
+
+                <div class="bulk-actions">
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--dark-blue);">
+                        <input type="checkbox" id="selectAllOrders" onchange="toggleSelectAll(this)"> Select All
+                    </label>
+                    <button onclick="bulkSendPending()" class="btn btn-primary" style="padding: 10px 18px; font-size: 0.85rem;">💬 Send "Pending" to Selected</button>
+                </div>
+
                 <div class="table-wrapper">
                     <table class="orders-table">
                         <thead>
-                            <tr><th>Date</th><th>ID</th><th>Phone</th><th>Item</th><th>Qty</th><th>Type</th><th>Total</th><th>Status</th><th>Action</th></tr>
+                            <tr>
+                                <th></th><th>Date</th><th>ID</th><th>Phone</th><th>Item</th><th>Qty</th><th>Type</th><th>Total</th><th>Status</th><th>Actions</th>
+                            </tr>
                         </thead>
-                        <tbody id="ordersTableBody"><tr><td colspan="9" style="text-align: center; color: #888;">No orders yet.</td></tr></tbody>
+                        <tbody id="ordersTableBody"><tr><td colspan="10" style="text-align: center; color: #888;">No orders yet.</td></tr></tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- PRODUCTS TAB -->
             <div id="productsTab" class="tab-content" style="display: none;">
                 <div class="product-manager-layout">
                     <div class="manager-form">
@@ -129,7 +144,7 @@
                         <div class="form-group"><label>Product Name</label><input type="text" id="prodName" class="form-input" placeholder="e.g., Oreo Explosion"></div>
                         <div class="form-group"><label>Price (KSh)</label><input type="number" id="prodPrice" class="form-input" placeholder="e.g., 150"></div>
                         <div class="form-group"><label>Description</label><input type="text" id="prodDesc" class="form-input" placeholder="Short description"></div>
-                        <div class="form-group"><label>Offer (Optional)</label><input type="text" id="prodOffer" class="form-input" placeholder="e.g., 20% OFF or Buy 1 Get 1"></div>
+                        <div class="form-group"><label>Offer (Optional)</label><input type="text" id="prodOffer" class="form-input" placeholder="e.g., 20% OFF"></div>
                         <div class="form-group">
                             <label>Attach Photo (Max 1)</label>
                             <input type="file" id="prodImage" accept="image/*" class="form-input" onchange="previewImage(event)">
@@ -148,6 +163,7 @@
         </div>
     </div>
 
+    <!-- ORDER MODAL -->
     <div id="orderModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeOrderModal()">&times;</span>
@@ -166,13 +182,27 @@
             <div class="form-group">
                 <label>Order Type:</label>
                 <div class="radio-group">
-                    <label class="radio-label"><input type="radio" name="orderType" value="Pickup" checked onchange="toggleDestination()"> Pickup (Bungoma)</label>
+                    <label class="radio-label"><input type="radio" name="orderType" value="Pickup" checked onchange="toggleDestination()"> Pickup</label>
                     <label class="radio-label"><input type="radio" name="orderType" value="Delivery" onchange="toggleDestination()"> Delivery</label>
                 </div>
             </div>
-            <div class="form-group" id="destinationGroup" style="display: none;"><label>Delivery Destination:</label><input type="text" id="modalDestination" placeholder="e.g., Bungoma Town, Kanduyi..." class="form-input"></div>
+            <div class="form-group" id="destinationGroup" style="display: none;"><label>Delivery Destination:</label><input type="text" id="modalDestination" placeholder="e.g., Bungoma Town..." class="form-input"></div>
             <div class="total-box"><span>Total:</span><span id="modalTotalPrice">KSh 0</span></div>
-            <button onclick="submitOrder()" class="btn btn-whatsapp" style="width: 100%; margin-top: 15px;">🟢 Send Order to WhatsApp</button>
+            <button onclick="submitOrder()" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Place My Order 🍭</button>
+        </div>
+    </div>
+
+    <!-- THANK YOU MODAL -->
+    <div id="thankYouModal" class="modal-overlay">
+        <div class="thank-you-card">
+            <div class="candy-rain" id="candyRain"></div>
+            <div class="thank-you-icon">🎉</div>
+            <h2 class="thank-you-title">Thank You!</h2>
+            <p class="thank-you-msg">Your order has been <strong>received</strong> 💕</p>
+            <p class="thank-you-sub">Please wait for feedback from the owner.<br>They will confirm your order shortly!</p>
+            <div class="thank-you-summary" id="thankYouSummary"></div>
+            <button onclick="sendWhatsAppFromThankYou()" class="btn btn-whatsapp" style="width: 100%; margin-top: 20px;">🟢 Send Order to WhatsApp</button>
+            <button onclick="closeThankYou()" class="btn btn-outline" style="width: 100%; margin-top: 10px; border-color: #ddd; color: #888;">Close</button>
         </div>
     </div>
 

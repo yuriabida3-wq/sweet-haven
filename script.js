@@ -2,6 +2,8 @@ let currentProduct = { name: '', price: 0 };
 let quantity = 1;
 let editingProductId = null;
 let base64Image = '';
+let currentOrderMessage = '';
+let currentOrderWhatsApp = '';
 
 const defaultProducts = [
     { id: 'p1', name: 'Mini Cup', price: 100, desc: 'Small & sweet, perfect for a quick treat.', image: 'https://images.unsplash.com/photo-1575224300306-1b8da36134ec?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', offer: 'Best Seller' },
@@ -13,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('sweetHavenProducts', JSON.stringify(defaultProducts));
     }
     renderStoreProducts();
+    spawnCandyBackground();
     
     const links = document.querySelectorAll('a[href^="#"]');
     links.forEach(link => {
@@ -26,19 +29,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// --- CANDY BACKGROUND ANIMATION ---
+function spawnCandyBackground() {
+    const bg = document.getElementById('candyBg');
+    const candies = ['🍭', '🍬', '🍫', '🧁', '🍩', '🍪', '💗', '🩷'];
+    for (let i = 0; i < 15; i++) {
+        const el = document.createElement('div');
+        el.className = 'candy-float';
+        el.innerText = candies[Math.floor(Math.random() * candies.length)];
+        el.style.left = Math.random() * 100 + '%';
+        el.style.animationDelay = Math.random() * 15 + 's';
+        el.style.animationDuration = (12 + Math.random() * 10) + 's';
+        el.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+        bg.appendChild(el);
+    }
+}
+
+// --- PUBLIC SITE ---
 function getProducts() { return JSON.parse(localStorage.getItem('sweetHavenProducts')) || []; }
 
 function renderStoreProducts() {
     const grid = document.getElementById('productGrid');
     const products = getProducts();
     if (products.length === 0) {
-        grid.innerHTML = '<p style="text-align: center; width: 100%; color: #888;">No products available right now. Check back soon!</p>';
+        grid.innerHTML = '<p style="text-align: center; width: 100%; color: #888;">No products available right now.</p>';
         return;
     }
     grid.innerHTML = products.map(prod => `
         <div class="product-card">
             ${prod.offer ? `<div class="badge">${prod.offer}</div>` : ''}
-            <img src="${prod.image}" alt="${prod.name}" class="product-img" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+            <img src="${prod.image}" alt="${prod.name}" class="product-img" onerror="this.src='https://via.placeholder.com/300x200?text=Sweet+Haven'">
             <h3 class="product-title">${prod.name.toUpperCase()}</h3>
             <p class="product-desc">🍭 ${prod.desc}</p>
             <div class="product-price">KSh ${prod.price}</div>
@@ -62,7 +82,7 @@ function openOrderModal(productName, price) {
 function closeOrderModal() { document.getElementById('orderModal').style.display = 'none'; }
 function changeQty(amount) { quantity += amount; if (quantity < 1) quantity = 1; document.getElementById('modalQuantity').value = quantity; updateTotal(); }
 function toggleDestination() { const type = document.querySelector('input[name="orderType"]:checked').value; document.getElementById('destinationGroup').style.display = (type === 'Delivery') ? 'block' : 'none'; }
-function updateTotal() { let baseTotal = currentProduct.price * quantity; if (currentProduct.price === 0) { document.getElementById('modalTotalPrice').innerText = 'To be confirmed'; } else { document.getElementById('modalTotalPrice').innerText = 'KSh ' + baseTotal; } }
+function updateTotal() { let baseTotal = currentProduct.price * quantity; document.getElementById('modalTotalPrice').innerText = (currentProduct.price === 0) ? 'To be confirmed' : 'KSh ' + baseTotal; }
 
 function submitOrder() {
     const qty = document.getElementById('modalQuantity').value;
@@ -73,39 +93,164 @@ function submitOrder() {
     const receiptId = 'SH-' + Math.floor(1000 + Math.random() * 9000);
     if (phone === '') { alert('Please enter your phone number.'); return; }
     if (orderType === 'Delivery' && destination === '') { alert('Please enter your delivery destination.'); return; }
-    let message = `*🧾 SWEET HAVEN RECEIPT*\n----------------------------\n*Order ID:* ${receiptId}\n*Customer Phone:* ${phone}\n*Item:* ${currentProduct.name}\n*Quantity:* ${qty}\n*Order Type:* ${orderType}\n`;
+
+    let message = `*🧾 SWEET HAVEN ORDER*\n----------------------------\n*Order ID:* ${receiptId}\n*Customer Phone:* ${phone}\n*Item:* ${currentProduct.name}\n*Quantity:* ${qty}\n*Order Type:* ${orderType}\n`;
     if (orderType === 'Delivery') message += `*Destination:* ${destination}\n*Delivery Fee:* To be confirmed\n`;
-    if (currentProduct.price > 0) message += `*Total Amount:* KSh ${total}\n`; else message += `*Amount:* To be discussed\n`;
-    message += `----------------------------\nPlease confirm my order. Thank you! 🍭`;
+    if (currentProduct.price > 0) message += `*Total Amount:* KSh ${total}\n`;
+    message += `----------------------------\nHello Sweet Haven! Please confirm my order 🍭`;
+
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     orders.push({ id: receiptId, phone: phone, item: currentProduct.name, qty: qty, type: orderType, destination: destination, total: total, status: 'Pending', date: new Date().toLocaleString() });
     localStorage.setItem('sweetHavenOrders', JSON.stringify(orders));
-    window.open(`https://wa.me/254740503058?text=${encodeURIComponent(message)}`, '_blank');
+
+    currentOrderMessage = message;
+    currentOrderWhatsApp = `https://wa.me/254740503058?text=${encodeURIComponent(message)}`;
+
+    // Show thank you modal with celebration
     closeOrderModal();
+    showThankYou({ id: receiptId, item: currentProduct.name, qty: qty, type: orderType, total: total, destination: destination });
 }
 
+function showThankYou(order) {
+    const summary = document.getElementById('thankYouSummary');
+    summary.innerHTML = `<strong>Order ID:</strong> ${order.id}<br><strong>Item:</strong> ${order.item}<br><strong>Quantity:</strong> ${order.qty}<br><strong>Type:</strong> ${order.type}${order.destination ? '<br><strong>Destination:</strong> ' + order.destination : ''}<br><strong>Total:</strong> KSh ${order.total}`;
+    
+    // Candy rain animation
+    const rain = document.getElementById('candyRain');
+    rain.innerHTML = '';
+    const candies = ['🍭', '🍬', '🍫', '🧁', '🍩', '💗', '✨', '🎉'];
+    for (let i = 0; i < 20; i++) {
+        const c = document.createElement('div');
+        c.className = 'candy-fall';
+        c.innerText = candies[Math.floor(Math.random() * candies.length)];
+        c.style.left = Math.random() * 100 + '%';
+        c.style.animationDelay = Math.random() * 2 + 's';
+        c.style.animationDuration = (2 + Math.random() * 2) + 's';
+        rain.appendChild(c);
+    }
+    
+    document.getElementById('thankYouModal').style.display = 'flex';
+}
+
+function sendWhatsAppFromThankYou() {
+    if (currentOrderWhatsApp) window.open(currentOrderWhatsApp, '_blank');
+}
+function closeThankYou() { document.getElementById('thankYouModal').style.display = 'none'; }
+
+// --- OWNER SITE ---
 function showOwnerLogin() { document.getElementById('publicSite').style.display = 'none'; document.getElementById('ownerSite').style.display = 'block'; document.getElementById('ownerLoginBox').style.display = 'block'; document.getElementById('ownerDashboardBox').style.display = 'none'; window.scrollTo(0, 0); }
 function loginOwner() { const pass = document.getElementById('ownerPassword').value; if (pass === 'admin123') { document.getElementById('ownerLoginBox').style.display = 'none'; document.getElementById('ownerDashboardBox').style.display = 'block'; renderOwnerOrders(); renderDashboardProducts(); } else { alert('Incorrect Password. Hint: admin123'); } }
 function logoutOwner() { document.getElementById('ownerSite').style.display = 'none'; document.getElementById('publicSite').style.display = 'block'; document.getElementById('ownerPassword').value = ''; window.scrollTo(0, 0); }
 function showTab(tabId) { document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none'); document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(tabId).style.display = 'block'; document.getElementById(tabId === 'ordersTab' ? 'btnOrders' : 'btnProducts').classList.add('active'); }
 
+// --- PHONE FORMATTER ---
+function formatKenyanPhone(phone) {
+    let cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) return '254' + cleaned.substring(1);
+    if (cleaned.startsWith('254')) return cleaned;
+    if (cleaned.length === 9) return '254' + cleaned;
+    return cleaned;
+}
+
+// --- ORDER MANAGEMENT ---
 function renderOwnerOrders() {
     const tbody = document.getElementById('ordersTableBody');
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     let totalRevenue = 0, pendingCount = 0;
-    if (orders.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888; padding: 20px;">No orders yet.</td></tr>'; } 
+    if (orders.length === 0) { tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #888; padding: 20px;">No orders yet.</td></tr>'; } 
     else {
         tbody.innerHTML = orders.map((order, index) => {
             if(order.status === 'Pending') pendingCount++;
             totalRevenue += parseInt(order.total) || 0;
-            return `<tr><td>${order.date}</td><td><strong>${order.id}</strong></td><td><strong>${order.phone}</strong></td><td>${order.item}</td><td>${order.qty}</td><td>${order.type}</td><td>KSh ${order.total}</td><td><span class="status-badge ${order.status === 'Pending' ? 'status-pending' : 'status-completed'}">${order.status}</span></td><td>${order.status === 'Pending' ? `<button class="action-btn" onclick="markCompleted(${index})">Mark Delivered</button>` : '✅ Done'}</td></tr>`;
+            const statusClass = order.status === 'Pending' ? 'status-pending' : (order.status === 'Confirmed' ? 'status-confirmed' : 'status-completed');
+            return `<tr>
+                <td><input type="checkbox" class="order-checkbox" data-index="${index}"></td>
+                <td>${order.date}</td>
+                <td><strong>${order.id}</strong></td>
+                <td><strong>${order.phone}</strong></td>
+                <td>${order.item}</td>
+                <td>${order.qty}</td>
+                <td>${order.type}</td>
+                <td>KSh ${order.total}</td>
+                <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                <td>
+                    <button class="action-btn blue" onclick="sendStatusMsg(${index}, 'Pending')">📩 Pending</button>
+                    <button class="action-btn green" onclick="sendStatusMsg(${index}, 'Confirmed')">✅ Received</button>
+                    <button class="action-btn" onclick="markCompleted(${index})">🎉 Completed</button>
+                </td>
+            </tr>`;
         }).join('');
     }
     document.getElementById('statRevenue').innerText = 'KSh ' + totalRevenue;
     document.getElementById('statOrders').innerText = orders.length;
     document.getElementById('statPending').innerText = pendingCount;
 }
-function markCompleted(index) { let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || []; if(orders[index]) { orders[index].status = 'Completed'; localStorage.setItem('sweetHavenOrders', JSON.stringify(orders)); renderOwnerOrders(); } }
+
+function sendStatusMsg(index, statusType) {
+    let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
+    const order = orders[index];
+    if (!order) return;
+    
+    const phone = formatKenyanPhone(order.phone);
+    let message = '';
+    
+    if (statusType === 'Pending') {
+        message = `Hi! 👋 Thank you for your order at *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n\n⏳ Your order is currently being reviewed. We'll notify you once it's confirmed. Please wait a moment! 💕`;
+    } else {
+        message = `Hi! 👋 Great news from *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n✅ We have *received* your order and it's been confirmed! We'll update you once it's on the way. Thank you! 💕`;
+        orders[index].status = 'Confirmed';
+        localStorage.setItem('sweetHavenOrders', JSON.stringify(orders));
+        renderOwnerOrders();
+    }
+    
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+}
+
+function markCompleted(index) {
+    let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
+    if(orders[index]) {
+        orders[index].status = 'Completed';
+        localStorage.setItem('sweetHavenOrders', JSON.stringify(orders));
+        renderOwnerOrders();
+        
+        const phone = formatKenyanPhone(orders[index].phone);
+        const message = `Hi! 👋 Thank you so much for choosing *Sweet Haven* 🍭💕\n\nYour order *${orders[index].id}* has been *completed*. We hope you enjoy your cotton candy! 🍬✨\n\nWe'd love it if you could share your experience with us on TikTok or Instagram. See you again soon! 🎉`;
+        if (confirm('Order marked as Completed. Send a thank-you message to the customer on WhatsApp?')) {
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+    }
+}
+
+function toggleSelectAll(checkbox) {
+    document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = checkbox.checked);
+}
+
+function bulkSendPending() {
+    const selected = document.querySelectorAll('.order-checkbox:checked');
+    if (selected.length === 0) { alert('Please select at least one order.'); return; }
+    
+    let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
+    let opened = 0;
+    const maxOpen = 5; // Avoid popup blocker
+    
+    selected.forEach(cb => {
+        const index = parseInt(cb.dataset.index);
+        const order = orders[index];
+        if (order && opened < maxOpen) {
+            const phone = formatKenyanPhone(order.phone);
+            const message = `Hi! 👋 Thank you for your order at *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n\n⏳ Your order is currently being reviewed. We'll notify you once it's confirmed. Please wait a moment! 💕`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+            opened++;
+        }
+    });
+    
+    if (selected.length > maxOpen) {
+        alert(`Opened ${maxOpen} WhatsApp tabs. Your browser limits how many can open at once — please run this again for the remaining ${selected.length - maxOpen} orders.`);
+    }
+    document.getElementById('selectAllOrders').checked = false;
+    document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
+}
+
 function exportCSV() {
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     if (orders.length === 0) { alert('No orders to export.'); return; }
@@ -114,6 +259,7 @@ function exportCSV() {
     const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Sweet_Haven_Sales_Report.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
+// --- PRODUCT MANAGER ---
 function renderDashboardProducts() {
     const container = document.getElementById('dashboardProductList');
     const products = getProducts();
