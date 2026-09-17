@@ -1,3 +1,10 @@
+// ==========================================
+// EDIT THESE TWO LINES WITH YOUR REAL VALUES
+// ==========================================
+const JSONBIN_BIN_ID = '6aac1335ffd5d1605312a216';
+const JSONBIN_MASTER_KEY = '$2a$10$bFPLjGCZET3w56jqQ8FUjeMpkOuUbyGh05TFWq/ZxNWkfPUpS0BRi';
+// ==========================================
+
 let currentProduct = { name: '', price: 0 };
 let quantity = 1;
 let editingProductId = null;
@@ -12,11 +19,48 @@ const defaultProducts = [
     { id: 'p2', name: 'Maxi Cup', price: 159, desc: 'Bigger serving, bigger sweetness.', image: 'https://images.unsplash.com/photo-1601000938259-9e92002320b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', offer: 'Popular' }
 ];
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (!localStorage.getItem('sweetHavenProducts')) {
-        localStorage.setItem('sweetHavenProducts', JSON.stringify(defaultProducts));
+// ==========================================
+// CLOUD FUNCTIONS (DO NOT EDIT BELOW)
+// ==========================================
+async function loadProductsFromCloud() {
+    try {
+        const res = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID + '/latest', {
+            headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
+        });
+        const data = await res.json();
+        let products = (data.record && data.record.products) ? data.record.products : [];
+        if (products.length === 0) {
+            products = defaultProducts;
+            await saveProductsToCloud(products);
+        }
+        localStorage.setItem('sweetHavenProducts', JSON.stringify(products));
+        return products;
+    } catch (e) {
+        console.warn('Cloud load failed, using local cache:', e);
+        return JSON.parse(localStorage.getItem('sweetHavenProducts')) || defaultProducts;
     }
-    renderStoreProducts();
+}
+
+async function saveProductsToCloud(products) {
+    try {
+        await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': JSONBIN_MASTER_KEY
+            },
+            body: JSON.stringify({ products: products })
+        });
+        localStorage.setItem('sweetHavenProducts', JSON.stringify(products));
+    } catch (e) {
+        console.warn('Cloud save failed:', e);
+        localStorage.setItem('sweetHavenProducts', JSON.stringify(products));
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const products = await loadProductsFromCloud();
+    renderStoreProducts(products);
     spawnCandyBackground();
     const links = document.querySelectorAll('a[href^="#"]');
     links.forEach(link => {
@@ -45,11 +89,11 @@ function spawnCandyBackground() {
     }
 }
 
-function getProducts() { return JSON.parse(localStorage.getItem('sweetHavenProducts')) || []; }
+function getProducts() { return JSON.parse(localStorage.getItem('sweetHavenProducts')) || defaultProducts; }
 
-function renderStoreProducts() {
+function renderStoreProducts(products) {
     const grid = document.getElementById('productGrid');
-    const products = getProducts();
+    if (!products) products = getProducts();
     if (products.length === 0) { grid.innerHTML = '<p style="text-align: center; width: 100%; color: #888;">No products available right now.</p>'; return; }
     grid.innerHTML = products.map(prod => `
         <div class="product-card">
@@ -143,7 +187,7 @@ function renderOwnerOrders() {
     const tbody = document.getElementById('ordersTableBody');
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     let totalRevenue = 0, pendingCount = 0;
-    if (orders.length === 0) { tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #888; padding: 20px;">No orders yet.</td></tr>'; } 
+    if (orders.length === 0) { tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #888; padding: 20px;">No orders yet.</td></tr>'; }
     else {
         tbody.innerHTML = orders.map((order, index) => {
             if(order.status === 'Pending') pendingCount++;
@@ -188,7 +232,7 @@ function sendStatusMsg(index, statusType) {
     if (!order) return;
     const phone = formatKenyanPhone(order.phone);
     let message = '';
-    if (statusType === 'Pending') { message = buildPendingMessage(order); } 
+    if (statusType === 'Pending') { message = buildPendingMessage(order); }
     else if (statusType === 'Confirmed') {
         message = buildConfirmedMessage(order);
         orders[index].status = 'Confirmed';
@@ -270,70 +314,56 @@ function closeBulkPanel() {
     bulkIndex = 0;
 }
 
-// --- PROFESSIONAL ACCOUNTING CSV EXPORT ---
 function exportCSV() {
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     if (orders.length === 0) { alert('No orders to export.'); return; }
-    
     let totalRevenue = 0, pending = 0, confirmed = 0, completed = 0;
     let pickupCount = 0, deliveryCount = 0, deliveryTotal = 0;
     let itemTotals = {};
-    
     orders.forEach(function(order) {
         const amt = parseFloat(order.total) || 0;
         totalRevenue += amt;
         if (order.status === 'Pending') pending++;
         else if (order.status === 'Confirmed') confirmed++;
         else if (order.status === 'Completed') completed++;
-        if (order.type === 'Delivery') { deliveryCount++; deliveryTotal += amt; }
-        else pickupCount++;
+        if (order.type === 'Delivery') { deliveryCount++; deliveryTotal += amt; } else pickupCount++;
         if (!itemTotals[order.item]) itemTotals[order.item] = { qty: 0, revenue: 0 };
         itemTotals[order.item].qty += parseInt(order.qty) || 0;
         itemTotals[order.item].revenue += amt;
     });
-    
     const today = new Date().toLocaleDateString('en-KE', { year: 'numeric', month: 'long', day: 'numeric' });
-    
     let csv = '\uFEFF';
     csv += 'SWEET HAVEN - SALES REPORT\n';
     csv += 'Report Generated,' + today + '\n';
     csv += 'Business Location,"Bungoma Town, Kenya"\n';
     csv += 'Contact,0740 503 058\n\n';
-    
     csv += 'FINANCIAL SUMMARY\n';
     csv += 'Metric,Value\n';
     csv += 'Total Revenue (KSh),' + totalRevenue.toFixed(2) + '\n';
     csv += 'Total Orders,' + orders.length + '\n';
     csv += 'Average Order Value (KSh),' + (orders.length > 0 ? (totalRevenue / orders.length).toFixed(2) : '0.00') + '\n\n';
-    
     csv += 'ORDER STATUS BREAKDOWN\n';
     csv += 'Status,Count\n';
     csv += 'Pending,' + pending + '\n';
     csv += 'Confirmed,' + confirmed + '\n';
     csv += 'Completed,' + completed + '\n\n';
-    
     csv += 'ORDER TYPE BREAKDOWN\n';
     csv += 'Type,Count,Revenue (KSh)\n';
     csv += 'Pickup,' + pickupCount + ',' + (totalRevenue - deliveryTotal).toFixed(2) + '\n';
     csv += 'Delivery,' + deliveryCount + ',' + deliveryTotal.toFixed(2) + '\n\n';
-    
     csv += 'SALES BY PRODUCT\n';
     csv += 'Product,Quantity Sold,Revenue (KSh)\n';
     Object.keys(itemTotals).forEach(function(item) {
         csv += '"' + item + '",' + itemTotals[item].qty + ',' + itemTotals[item].revenue.toFixed(2) + '\n';
     });
-    csv += '\n';
-    
-    csv += 'ITEMIZED ORDERS\n';
+    csv += '\nITEMIZED ORDERS\n';
     csv += 'Date,Order ID,Customer Phone,Item,Quantity,Order Type,Delivery Destination,Unit Price (KSh),Total (KSh),Status\n';
     orders.forEach(function(order) {
         const unitPrice = order.qty > 0 ? (parseFloat(order.total) / parseInt(order.qty)).toFixed(2) : '0.00';
         csv += ['"' + order.date + '"', '"' + order.id + '"', '"' + order.phone + '"', '"' + order.item + '"', order.qty, order.type, '"' + (order.destination || 'N/A') + '"', unitPrice, parseFloat(order.total).toFixed(2), order.status].join(',') + '\n';
     });
-    
     csv += '\nGRAND TOTAL,' + totalRevenue.toFixed(2) + '\n\n';
     csv += 'Generated by JENGA WEB - We build, you grow.\n';
-    
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -359,7 +389,8 @@ function renderDashboardProducts() {
     `).join('');
 }
 function previewImage(event) { const reader = new FileReader(); reader.onload = function(){ const output = document.getElementById('imagePreview'); output.src = reader.result; output.style.display = 'block'; base64Image = reader.result; }; if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]); }
-function saveProduct() {
+
+async function saveProduct() {
     const name = document.getElementById('prodName').value.trim();
     const price = document.getElementById('prodPrice').value.trim();
     const desc = document.getElementById('prodDesc').value.trim();
@@ -368,11 +399,14 @@ function saveProduct() {
     let products = getProducts();
     let imageUrl = base64Image;
     if (!imageUrl) { if (editingProductId) { const existing = products.find(p => p.id === editingProductId); if (existing) imageUrl = existing.image; } else { imageUrl = 'https://via.placeholder.com/300x200?text=Sweet+Haven'; } }
-    if (editingProductId) { const index = products.findIndex(p => p.id === editingProductId); if (index !== -1) { products[index] = { ...products[index], name, price: Number(price), desc, offer, image: imageUrl }; } } 
+    if (editingProductId) { const index = products.findIndex(p => p.id === editingProductId); if (index !== -1) { products[index] = { ...products[index], name, price: Number(price), desc, offer, image: imageUrl }; } }
     else { const newId = 'p' + Date.now(); products.push({ id: newId, name, price: Number(price), desc, offer, image: imageUrl }); }
-    localStorage.setItem('sweetHavenProducts', JSON.stringify(products));
-    clearForm(); renderDashboardProducts(); renderStoreProducts(); alert('Product saved successfully!');
+
+    await saveProductsToCloud(products);
+    clearForm(); renderDashboardProducts(); renderStoreProducts(products);
+    alert('✅ Product saved to cloud! Customers will see this update.');
 }
+
 function editProduct(id) {
     const products = getProducts(); const prod = products.find(p => p.id === id); if (!prod) return;
     editingProductId = id; document.getElementById('formTitle').innerText = 'Edit Product';
@@ -381,12 +415,15 @@ function editProduct(id) {
     const preview = document.getElementById('imagePreview'); preview.src = prod.image; preview.style.display = 'block'; base64Image = '';
     document.querySelector('.manager-form').scrollIntoView({ behavior: 'smooth' });
 }
-function deleteProduct(id) {
+
+async function deleteProduct(id) {
     if (!confirm('Are you sure you want to delete this product?')) return;
     let products = getProducts(); products = products.filter(p => p.id !== id);
-    localStorage.setItem('sweetHavenProducts', JSON.stringify(products));
-    renderDashboardProducts(); renderStoreProducts();
+    await saveProductsToCloud(products);
+    renderDashboardProducts(); renderStoreProducts(products);
+    alert('✅ Product deleted from cloud!');
 }
+
 function clearForm() {
     editingProductId = null; document.getElementById('formTitle').innerText = 'Add New Product';
     document.getElementById('prodName').value = ''; document.getElementById('prodPrice').value = '';
