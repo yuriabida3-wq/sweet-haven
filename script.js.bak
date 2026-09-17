@@ -4,6 +4,8 @@ let editingProductId = null;
 let base64Image = '';
 let currentOrderMessage = '';
 let currentOrderWhatsApp = '';
+
+// Bulk sending queue
 let bulkQueue = [];
 let bulkIndex = 0;
 
@@ -175,9 +177,11 @@ function renderOwnerOrders() {
 function buildPendingMessage(order) {
     return `Hi! 👋 Thank you for your order at *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n⏳ Your order is currently being reviewed. We'll notify you once it's confirmed. Please wait a moment! 💕`;
 }
+
 function buildConfirmedMessage(order) {
     return `Hi! 👋 Great news from *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n✅ We have *received* your order and it's been confirmed! We'll update you once it's on the way. Thank you! 💕`;
 }
+
 function buildCompletedMessage(order) {
     return `Hi! 👋 Thank you so much for choosing *Sweet Haven* 🍭💕\n\nYour order *${order.id}* has been *completed*. We hope you enjoy your cotton candy! 🍬✨\n\nWe'd love it if you could share your experience with us on TikTok or Instagram. See you again soon! 🎉`;
 }
@@ -216,16 +220,20 @@ function toggleSelectAll(checkbox) {
     document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = checkbox.checked);
 }
 
+// --- SEQUENTIAL BULK SENDER ---
 function bulkSendPending() {
     const selected = document.querySelectorAll('.order-checkbox:checked');
     if (selected.length === 0) { alert('Please select at least one order.'); return; }
+    
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     bulkQueue = [];
     selected.forEach(cb => {
         const index = parseInt(cb.dataset.index);
         if (orders[index]) bulkQueue.push(orders[index]);
     });
+    
     if (bulkQueue.length === 0) { alert('No valid orders found.'); return; }
+    
     bulkIndex = 0;
     document.getElementById('bulkPanel').style.display = 'block';
     updateBulkPanel();
@@ -236,6 +244,7 @@ function updateBulkPanel() {
     const done = bulkIndex;
     const percent = total > 0 ? (done / total) * 100 : 0;
     document.getElementById('bulkProgressBar').style.width = percent + '%';
+    
     if (done >= total) {
         document.getElementById('bulkProgressText').innerText = `✅ All ${total} messages sent!`;
         document.getElementById('bulkCurrentOrder').innerHTML = '<strong>Done!</strong> You can close this panel now.';
@@ -246,6 +255,7 @@ function updateBulkPanel() {
         document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
         return;
     }
+    
     const order = bulkQueue[done];
     document.getElementById('bulkProgressText').innerText = `Sending ${done + 1} of ${total}`;
     document.getElementById('bulkCurrentOrder').innerHTML = `<strong>${order.id}</strong><br>📞 ${order.phone}<br>🍭 ${order.item} (x${order.qty})<br>💰 KSh ${order.total}`;
@@ -270,80 +280,12 @@ function closeBulkPanel() {
     bulkIndex = 0;
 }
 
-// --- PROFESSIONAL ACCOUNTING CSV EXPORT ---
 function exportCSV() {
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     if (orders.length === 0) { alert('No orders to export.'); return; }
-    
-    let totalRevenue = 0, pending = 0, confirmed = 0, completed = 0;
-    let pickupCount = 0, deliveryCount = 0, deliveryTotal = 0;
-    let itemTotals = {};
-    
-    orders.forEach(function(order) {
-        const amt = parseFloat(order.total) || 0;
-        totalRevenue += amt;
-        if (order.status === 'Pending') pending++;
-        else if (order.status === 'Confirmed') confirmed++;
-        else if (order.status === 'Completed') completed++;
-        if (order.type === 'Delivery') { deliveryCount++; deliveryTotal += amt; }
-        else pickupCount++;
-        if (!itemTotals[order.item]) itemTotals[order.item] = { qty: 0, revenue: 0 };
-        itemTotals[order.item].qty += parseInt(order.qty) || 0;
-        itemTotals[order.item].revenue += amt;
-    });
-    
-    const today = new Date().toLocaleDateString('en-KE', { year: 'numeric', month: 'long', day: 'numeric' });
-    
-    let csv = '\uFEFF';
-    csv += 'SWEET HAVEN - SALES REPORT\n';
-    csv += 'Report Generated,' + today + '\n';
-    csv += 'Business Location,"Bungoma Town, Kenya"\n';
-    csv += 'Contact,0740 503 058\n\n';
-    
-    csv += 'FINANCIAL SUMMARY\n';
-    csv += 'Metric,Value\n';
-    csv += 'Total Revenue (KSh),' + totalRevenue.toFixed(2) + '\n';
-    csv += 'Total Orders,' + orders.length + '\n';
-    csv += 'Average Order Value (KSh),' + (orders.length > 0 ? (totalRevenue / orders.length).toFixed(2) : '0.00') + '\n\n';
-    
-    csv += 'ORDER STATUS BREAKDOWN\n';
-    csv += 'Status,Count\n';
-    csv += 'Pending,' + pending + '\n';
-    csv += 'Confirmed,' + confirmed + '\n';
-    csv += 'Completed,' + completed + '\n\n';
-    
-    csv += 'ORDER TYPE BREAKDOWN\n';
-    csv += 'Type,Count,Revenue (KSh)\n';
-    csv += 'Pickup,' + pickupCount + ',' + (totalRevenue - deliveryTotal).toFixed(2) + '\n';
-    csv += 'Delivery,' + deliveryCount + ',' + deliveryTotal.toFixed(2) + '\n\n';
-    
-    csv += 'SALES BY PRODUCT\n';
-    csv += 'Product,Quantity Sold,Revenue (KSh)\n';
-    Object.keys(itemTotals).forEach(function(item) {
-        csv += '"' + item + '",' + itemTotals[item].qty + ',' + itemTotals[item].revenue.toFixed(2) + '\n';
-    });
-    csv += '\n';
-    
-    csv += 'ITEMIZED ORDERS\n';
-    csv += 'Date,Order ID,Customer Phone,Item,Quantity,Order Type,Delivery Destination,Unit Price (KSh),Total (KSh),Status\n';
-    orders.forEach(function(order) {
-        const unitPrice = order.qty > 0 ? (parseFloat(order.total) / parseInt(order.qty)).toFixed(2) : '0.00';
-        csv += ['"' + order.date + '"', '"' + order.id + '"', '"' + order.phone + '"', '"' + order.item + '"', order.qty, order.type, '"' + (order.destination || 'N/A') + '"', unitPrice, parseFloat(order.total).toFixed(2), order.status].join(',') + '\n';
-    });
-    
-    csv += '\nGRAND TOTAL,' + totalRevenue.toFixed(2) + '\n\n';
-    csv += 'Generated by JENGA WEB - We build, you grow.\n';
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    const fileDate = new Date().toISOString().split('T')[0];
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'Sweet_Haven_Sales_Report_' + fileDate + '.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    let csvContent = "data:text/csv;charset=utf-8,Date,Order ID,Customer Phone,Item,Quantity,Type,Destination,Total (KSh),Status\n";
+    orders.forEach(function(order) { csvContent += [`"${order.date}"`, `"${order.id}"`, `"${order.phone}"`, `"${order.item}"`, `"${order.qty}"`, `"${order.type}"`, `"${order.destination || 'N/A'}"`, `"${order.total}"`, `"${order.status}"`].join(",") + "\r\n"; });
+    const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Sweet_Haven_Sales_Report.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 function renderDashboardProducts() {
