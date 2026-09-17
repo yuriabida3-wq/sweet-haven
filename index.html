@@ -18,7 +18,7 @@
             <div class="nav-links">
                 <a href="#products">Menu</a>
                 <a href="#why-us">Why Us</a>
-                <a href="#" onclick="openOrderModal('Custom Order', 0)" class="nav-order-btn">Order Now</a>
+                <a href="#" onclick="openOrderModal('Custom Order', 0, [])" class="nav-order-btn">Order Now</a>
             </div>
         </nav>
 
@@ -29,7 +29,7 @@
                 <p class="hero-subtitle">Bungoma's Premium Cotton Candy Experience</p>
                 <div class="hero-price-badge">Mini Cup — KSh 100 | Maxi Cup — KSh 159</div>
                 <div class="hero-buttons">
-                    <button onclick="openOrderModal('Custom Order', 0)" class="btn btn-primary">🛒 Order Now</button>
+                    <button onclick="openOrderModal('Custom Order', 0, [])" class="btn btn-primary">🛒 Order Now</button>
                     <a href="#location" class="btn btn-outline">📍 Find Us</a>
                 </div>
             </div>
@@ -45,7 +45,7 @@
             <div class="combo-banner">
                 <h2>Countrywide Delivery 🚚</h2>
                 <p>We deliver anywhere in Kenya 🇰🇪<br><small>Delivery charges depend on your location.</small></p>
-                <button onclick="openOrderModal('Delivery Inquiry', 0)" class="btn btn-dark">Inquire About Delivery</button>
+                <button onclick="openOrderModal('Delivery Inquiry', 0, [])" class="btn btn-dark">Inquire About Delivery</button>
             </div>
         </section>
 
@@ -106,32 +106,28 @@
                 <button onclick="showTab('productsTab')" id="btnProducts" class="tab-btn">Manage Products</button>
             </div>
 
+            <!-- ORDERS TAB -->
             <div id="ordersTab" class="tab-content">
                 <div class="stats-grid">
                     <div class="stat-card"><h4>Total Revenue</h4><p id="statRevenue">KSh 0</p></div>
                     <div class="stat-card"><h4>Total Orders</h4><p id="statOrders">0</p></div>
                     <div class="stat-card"><h4>Pending Orders</h4><p id="statPending">0</p></div>
                 </div>
-
                 <div class="bulk-actions">
                     <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--dark-blue);">
                         <input type="checkbox" id="selectAllOrders" onchange="toggleSelectAll(this)"> Select All
                     </label>
                     <button onclick="bulkSendPending()" class="btn btn-primary" style="padding: 10px 18px; font-size: 0.85rem;">💬 Send "Pending" to Selected</button>
                 </div>
-
                 <div class="table-wrapper">
                     <table class="orders-table">
-                        <thead>
-                            <tr>
-                                <th></th><th>Date</th><th>ID</th><th>Phone</th><th>Item</th><th>Qty</th><th>Type</th><th>Total</th><th>Status</th><th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ordersTableBody"><tr><td colspan="10" style="text-align: center; color: #888;">No orders yet.</td></tr></tbody>
+                        <thead><tr><th></th><th>Date</th><th>ID</th><th>Phone</th><th>Item</th><th>Flavor</th><th>Qty</th><th>Type</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="ordersTableBody"><tr><td colspan="11" style="text-align: center; color: #888;">No orders yet.</td></tr></tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- PRODUCTS TAB -->
             <div id="productsTab" class="tab-content" style="display: none;">
                 <div class="product-manager-layout">
                     <div class="manager-form">
@@ -142,6 +138,11 @@
                         <div class="form-group"><label>Description</label><input type="text" id="prodDesc" class="form-input" placeholder="Short description"></div>
                         <div class="form-group"><label>Offer (Optional)</label><input type="text" id="prodOffer" class="form-input" placeholder="e.g., 20% OFF"></div>
                         <div class="form-group">
+                            <label>Flavors (comma separated, optional)</label>
+                            <input type="text" id="prodFlavors" class="form-input" placeholder="e.g., Strawberry, Chocolate, Vanilla">
+                            <small style="color: #a17a8b; font-size: 0.75rem; display: block; margin-top: 5px;">Separate with commas. Leave empty if only one option.</small>
+                        </div>
+                        <div class="form-group">
                             <label>Attach Photo (Max 1)</label>
                             <input type="file" id="prodImage" accept="image/*" class="form-input" onchange="previewImage(event)">
                             <img id="imagePreview" src="#" alt="Preview" style="display:none; width: 100%; max-height: 150px; object-fit: cover; border-radius: 10px; margin-top: 10px;">
@@ -149,7 +150,6 @@
                         <button onclick="saveProduct()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Product</button>
                         <button onclick="clearForm()" class="btn btn-outline" style="width: 100%; margin-top: 5px; border-color: #ccc; color: #666;">Cancel / Clear</button>
                     </div>
-
                     <div class="manager-list">
                         <h3>Current Products</h3>
                         <div id="dashboardProductList"></div>
@@ -166,13 +166,15 @@
             <h2 style="color: var(--deep-pink); margin-bottom: 5px;">Complete Your Order</h2>
             <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Fill in the details to generate your receipt.</p>
             <div class="form-group"><label>Product:</label><input type="text" id="modalProductName" class="form-input" readonly></div>
+            
+            <div class="form-group" id="flavorGroup" style="display: none;">
+                <label>🍬 Choose Your Flavor:</label>
+                <div id="flavorOptions" class="flavor-options"></div>
+            </div>
+
             <div class="form-group">
                 <label>Quantity:</label>
-                <div class="qty-control">
-                    <button onclick="changeQty(-1)">-</button>
-                    <input type="number" id="modalQuantity" value="1" min="1" readonly>
-                    <button onclick="changeQty(1)">+</button>
-                </div>
+                <div class="qty-control"><button onclick="changeQty(-1)">-</button><input type="number" id="modalQuantity" value="1" min="1" readonly><button onclick="changeQty(1)">+</button></div>
             </div>
             <div class="form-group"><label>Your Phone Number:</label><input type="tel" id="modalPhone" placeholder="e.g., 0712 345 678" class="form-input" required></div>
             <div class="form-group">
@@ -202,16 +204,10 @@
         </div>
     </div>
 
-    <!-- SEQUENTIAL SENDER PANEL -->
     <div id="bulkPanel" class="bulk-panel" style="display:none;">
-        <div class="bulk-panel-header">
-            <h3>📤 Sending Messages</h3>
-            <span class="close-btn" onclick="closeBulkPanel()">&times;</span>
-        </div>
+        <div class="bulk-panel-header"><h3>📤 Sending Messages</h3><span class="close-btn" onclick="closeBulkPanel()">&times;</span></div>
         <div class="bulk-panel-body">
-            <div class="progress-track">
-                <div id="bulkProgressBar" class="progress-fill"></div>
-            </div>
+            <div class="progress-track"><div id="bulkProgressBar" class="progress-fill"></div></div>
             <p id="bulkProgressText" class="bulk-progress-text">Ready</p>
             <div id="bulkCurrentOrder" class="bulk-current-order"></div>
             <button id="bulkNextBtn" onclick="sendNextInQueue()" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Send to First Customer →</button>

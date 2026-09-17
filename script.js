@@ -5,7 +5,8 @@ const JSONBIN_BIN_ID = '6aac1335ffd5d1605312a216';
 const JSONBIN_MASTER_KEY = '$2a$10$bFPLjGCZET3w56jqQ8FUjeMpkOuUbyGh05TFWq/ZxNWkfPUpS0BRi';
 // ==========================================
 
-let currentProduct = { name: '', price: 0 };
+let currentProduct = { name: '', price: 0, flavors: [] };
+let currentFlavor = '';
 let quantity = 1;
 let editingProductId = null;
 let base64Image = '';
@@ -15,8 +16,8 @@ let bulkQueue = [];
 let bulkIndex = 0;
 
 const defaultProducts = [
-    { id: 'p1', name: 'Mini Cup', price: 100, desc: 'Small & sweet, perfect for a quick treat.', image: 'https://images.unsplash.com/photo-1575224300306-1b8da36134ec?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', offer: 'Best Seller' },
-    { id: 'p2', name: 'Maxi Cup', price: 159, desc: 'Bigger serving, bigger sweetness.', image: 'https://images.unsplash.com/photo-1601000938259-9e92002320b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', offer: 'Popular' }
+    { id: 'p1', name: 'Mini Cup', price: 100, desc: 'Small & sweet, perfect for a quick treat.', image: 'https://images.unsplash.com/photo-1575224300306-1b8da36134ec?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', offer: 'Best Seller', flavors: ['Strawberry', 'Vanilla', 'Bubblegum'] },
+    { id: 'p2', name: 'Maxi Cup', price: 159, desc: 'Bigger serving, bigger sweetness.', image: 'https://images.unsplash.com/photo-1601000938259-9e92002320b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', offer: 'Popular', flavors: ['Chocolate', 'Mango', 'Blueberry', 'Cotton Candy'] }
 ];
 
 // ---- CLOUD FUNCTIONS ----
@@ -43,10 +44,7 @@ async function saveProductsToCloud(products) {
     try {
         await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': JSONBIN_MASTER_KEY
-            },
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_MASTER_KEY },
             body: JSON.stringify({ products: products })
         });
         localStorage.setItem('sweetHavenProducts', JSON.stringify(products));
@@ -74,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function spawnCandyBackground() {
     const bg = document.getElementById('candyBg');
-    const candies = ['🍭', '🍬', '🍫', '🧁', '🍩', '🍪', '💗', '🩷'];
+    const candies = ['🍭', '🍬', '🍫', '🧁', '🍩', '🍪', '💗', '🩷', '✨'];
     for (let i = 0; i < 15; i++) {
         const el = document.createElement('div');
         el.className = 'candy-float';
@@ -93,20 +91,32 @@ function renderStoreProducts(products) {
     const grid = document.getElementById('productGrid');
     if (!products) products = getProducts();
     if (products.length === 0) { grid.innerHTML = '<p style="text-align: center; width: 100%; color: #888;">No products available right now.</p>'; return; }
-    grid.innerHTML = products.map(prod => `
+    grid.innerHTML = products.map(prod => {
+        const flavors = prod.flavors || [];
+        return `
         <div class="product-card">
             ${prod.offer ? `<div class="badge">${prod.offer}</div>` : ''}
             <img src="${prod.image}" alt="${prod.name}" class="product-img" onerror="this.src='https://via.placeholder.com/300x200?text=Sweet+Haven'">
             <h3 class="product-title">${prod.name.toUpperCase()}</h3>
             <p class="product-desc">🍭 ${prod.desc}</p>
+            ${flavors.length > 0 ? `<div class="flavor-tags">${flavors.map(f => `<span class="flavor-tag">${f}</span>`).join('')}</div>` : ''}
             <div class="product-price">KSh ${prod.price}</div>
-            <button onclick="openOrderModal('${prod.name.replace(/'/g, "\\'")}', ${prod.price})" class="btn btn-order">Order Now →</button>
+            <button onclick="openOrderModalById('${prod.id}')" class="btn btn-order">Order Now →</button>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-function openOrderModal(productName, price) {
-    currentProduct = { name: productName, price: price };
+function openOrderModalById(id) {
+    const products = getProducts();
+    const prod = products.find(p => p.id === id);
+    if (!prod) return;
+    openOrderModal(prod.name, prod.price, prod.flavors || []);
+}
+
+function openOrderModal(productName, price, flavors) {
+    currentProduct = { name: productName, price: price, flavors: flavors || [] };
+    currentFlavor = '';
     quantity = 1;
     document.getElementById('modalProductName').value = productName;
     document.getElementById('modalQuantity').value = 1;
@@ -114,9 +124,33 @@ function openOrderModal(productName, price) {
     document.getElementById('modalDestination').value = '';
     document.getElementById('destinationGroup').style.display = 'none';
     document.querySelector('input[name="orderType"][value="Pickup"]').checked = true;
+
+    // Handle flavor chips
+    const flavorGroup = document.getElementById('flavorGroup');
+    const flavorOptions = document.getElementById('flavorOptions');
+    if (flavors && flavors.length > 0) {
+        flavorGroup.style.display = 'block';
+        flavorOptions.innerHTML = flavors.map((f, i) => {
+            const safe = f.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            return `<button type="button" class="flavor-chip" style="animation-delay:${i * 0.08}s" onclick="selectFlavor('${safe}', this)">${f}</button>`;
+        }).join('');
+    } else {
+        flavorGroup.style.display = 'none';
+        flavorOptions.innerHTML = '';
+    }
+
     updateTotal();
     document.getElementById('orderModal').style.display = 'flex';
 }
+
+function selectFlavor(flavor, btn) {
+    currentFlavor = flavor;
+    document.querySelectorAll('.flavor-chip').forEach(c => c.classList.remove('selected', 'sparkling'));
+    btn.classList.add('selected', 'sparkling');
+    // remove sparkle class after animation
+    setTimeout(() => btn.classList.remove('sparkling'), 800);
+}
+
 function closeOrderModal() { document.getElementById('orderModal').style.display = 'none'; }
 function changeQty(amount) { quantity += amount; if (quantity < 1) quantity = 1; document.getElementById('modalQuantity').value = quantity; updateTotal(); }
 function toggleDestination() { const type = document.querySelector('input[name="orderType"]:checked').value; document.getElementById('destinationGroup').style.display = (type === 'Delivery') ? 'block' : 'none'; }
@@ -131,25 +165,28 @@ function submitOrder() {
     const receiptId = 'SH-' + Math.floor(1000 + Math.random() * 9000);
     if (phone === '') { alert('Please enter your phone number.'); return; }
     if (orderType === 'Delivery' && destination === '') { alert('Please enter your delivery destination.'); return; }
+    if (currentProduct.flavors && currentProduct.flavors.length > 0 && !currentFlavor) { alert('Please choose your favorite flavor 🍬'); return; }
 
-    let message = `*🧾 SWEET HAVEN ORDER*\n----------------------------\n*Order ID:* ${receiptId}\n*Customer Phone:* ${phone}\n*Item:* ${currentProduct.name}\n*Quantity:* ${qty}\n*Order Type:* ${orderType}\n`;
+    let message = `*🧾 SWEET HAVEN ORDER*\n----------------------------\n*Order ID:* ${receiptId}\n*Customer Phone:* ${phone}\n*Item:* ${currentProduct.name}\n`;
+    if (currentFlavor) message += `*Flavor:* ${currentFlavor}\n`;
+    message += `*Quantity:* ${qty}\n*Order Type:* ${orderType}\n`;
     if (orderType === 'Delivery') message += `*Destination:* ${destination}\n*Delivery Fee:* To be confirmed\n`;
     if (currentProduct.price > 0) message += `*Total Amount:* KSh ${total}\n`;
     message += `----------------------------\nHello Sweet Haven! Please confirm my order 🍭`;
 
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
-    orders.push({ id: receiptId, phone: phone, item: currentProduct.name, qty: qty, type: orderType, destination: destination, total: total, status: 'Pending', date: new Date().toLocaleString() });
+    orders.push({ id: receiptId, phone: phone, item: currentProduct.name, flavor: currentFlavor, qty: qty, type: orderType, destination: destination, total: total, status: 'Pending', date: new Date().toLocaleString() });
     localStorage.setItem('sweetHavenOrders', JSON.stringify(orders));
 
     currentOrderMessage = message;
     currentOrderWhatsApp = `https://wa.me/254740503058?text=${encodeURIComponent(message)}`;
     closeOrderModal();
-    showThankYou({ id: receiptId, item: currentProduct.name, qty: qty, type: orderType, total: total, destination: destination });
+    showThankYou({ id: receiptId, item: currentProduct.name, flavor: currentFlavor, qty: qty, type: orderType, total: total, destination: destination });
 }
 
 function showThankYou(order) {
     const summary = document.getElementById('thankYouSummary');
-    summary.innerHTML = `<strong>Order ID:</strong> ${order.id}<br><strong>Item:</strong> ${order.item}<br><strong>Quantity:</strong> ${order.qty}<br><strong>Type:</strong> ${order.type}${order.destination ? '<br><strong>Destination:</strong> ' + order.destination : ''}<br><strong>Total:</strong> KSh ${order.total}`;
+    summary.innerHTML = `<strong>Order ID:</strong> ${order.id}<br><strong>Item:</strong> ${order.item}${order.flavor ? ' — ' + order.flavor : ''}<br><strong>Quantity:</strong> ${order.qty}<br><strong>Type:</strong> ${order.type}${order.destination ? '<br><strong>Destination:</strong> ' + order.destination : ''}<br><strong>Total:</strong> KSh ${order.total}`;
     const rain = document.getElementById('candyRain');
     rain.innerHTML = '';
     const candies = ['🍭', '🍬', '🍫', '🧁', '🍩', '💗', '✨', '🎉'];
@@ -185,7 +222,7 @@ function renderOwnerOrders() {
     const tbody = document.getElementById('ordersTableBody');
     let orders = JSON.parse(localStorage.getItem('sweetHavenOrders')) || [];
     let totalRevenue = 0, pendingCount = 0;
-    if (orders.length === 0) { tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #888; padding: 20px;">No orders yet.</td></tr>'; }
+    if (orders.length === 0) { tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: #888; padding: 20px;">No orders yet.</td></tr>'; }
     else {
         tbody.innerHTML = orders.map((order, index) => {
             if(order.status === 'Pending') pendingCount++;
@@ -197,6 +234,7 @@ function renderOwnerOrders() {
                 <td><strong>${order.id}</strong></td>
                 <td><strong>${order.phone}</strong></td>
                 <td>${order.item}</td>
+                <td>${order.flavor || '—'}</td>
                 <td>${order.qty}</td>
                 <td>${order.type}</td>
                 <td>KSh ${order.total}</td>
@@ -214,8 +252,8 @@ function renderOwnerOrders() {
     document.getElementById('statPending').innerText = pendingCount;
 }
 
-function buildPendingMessage(order) { return `Hi! 👋 Thank you for your order at *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n⏳ Your order is currently being reviewed. We'll notify you once it's confirmed. Please wait a moment! 💕`; }
-function buildConfirmedMessage(order) { return `Hi! 👋 Great news from *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item} (x${order.qty})\n*Total:* KSh ${order.total}\n\n✅ We have *received* your order and it's been confirmed! We'll update you once it's on the way. Thank you! 💕`; }
+function buildPendingMessage(order) { return `Hi! 👋 Thank you for your order at *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item}${order.flavor ? ' (' + order.flavor + ')' : ''} (x${order.qty})\n*Total:* KSh ${order.total}\n\n⏳ Your order is currently being reviewed. We'll notify you once it's confirmed. Please wait a moment! 💕`; }
+function buildConfirmedMessage(order) { return `Hi! 👋 Great news from *Sweet Haven* 🍭\n\n*Order ID:* ${order.id}\n*Item:* ${order.item}${order.flavor ? ' (' + order.flavor + ')' : ''} (x${order.qty})\n*Total:* KSh ${order.total}\n\n✅ We have *received* your order and it's been confirmed! We'll update you once it's on the way. Thank you! 💕`; }
 function buildCompletedMessage(order) { return `Hi! 👋 Thank you so much for choosing *Sweet Haven* 🍭💕\n\nYour order *${order.id}* has been *completed*. We hope you enjoy your cotton candy! 🍬✨\n\nWe'd love it if you could share your experience with us on TikTok or Instagram. See you again soon! 🎉`; }
 
 function sendStatusMsg(index, statusType) {
@@ -279,7 +317,7 @@ function updateBulkPanel() {
     }
     const order = bulkQueue[done];
     document.getElementById('bulkProgressText').innerText = `Sending ${done + 1} of ${total}`;
-    document.getElementById('bulkCurrentOrder').innerHTML = `<strong>${order.id}</strong><br>📞 ${order.phone}<br>🍭 ${order.item} (x${order.qty})<br>💰 KSh ${order.total}`;
+    document.getElementById('bulkCurrentOrder').innerHTML = `<strong>${order.id}</strong><br>📞 ${order.phone}<br>🍭 ${order.item}${order.flavor ? ' (' + order.flavor + ')' : ''} (x${order.qty})<br>💰 KSh ${order.total}`;
     const btn = document.getElementById('bulkNextBtn');
     btn.innerText = done === 0 ? 'Send to First Customer →' : `Send to Customer ${done + 1} →`;
     btn.onclick = sendNextInQueue;
@@ -308,9 +346,10 @@ function exportCSV() {
         totalRevenue += amt;
         if (order.status === 'Pending') pending++; else if (order.status === 'Confirmed') confirmed++; else if (order.status === 'Completed') completed++;
         if (order.type === 'Delivery') { deliveryCount++; deliveryTotal += amt; } else pickupCount++;
-        if (!itemTotals[order.item]) itemTotals[order.item] = { qty: 0, revenue: 0 };
-        itemTotals[order.item].qty += parseInt(order.qty) || 0;
-        itemTotals[order.item].revenue += amt;
+        const key = order.item + (order.flavor ? ' (' + order.flavor + ')' : '');
+        if (!itemTotals[key]) itemTotals[key] = { qty: 0, revenue: 0 };
+        itemTotals[key].qty += parseInt(order.qty) || 0;
+        itemTotals[key].revenue += amt;
     });
     const today = new Date().toLocaleDateString('en-KE', { year: 'numeric', month: 'long', day: 'numeric' });
     let csv = '\uFEFF';
@@ -324,12 +363,12 @@ function exportCSV() {
     csv += 'Average Order Value (KSh),' + (orders.length > 0 ? (totalRevenue / orders.length).toFixed(2) : '0.00') + '\n\n';
     csv += 'ORDER STATUS BREAKDOWN\nStatus,Count\nPending,' + pending + '\nConfirmed,' + confirmed + '\nCompleted,' + completed + '\n\n';
     csv += 'ORDER TYPE BREAKDOWN\nType,Count,Revenue (KSh)\nPickup,' + pickupCount + ',' + (totalRevenue - deliveryTotal).toFixed(2) + '\nDelivery,' + deliveryCount + ',' + deliveryTotal.toFixed(2) + '\n\n';
-    csv += 'SALES BY PRODUCT\nProduct,Quantity Sold,Revenue (KSh)\n';
+    csv += 'SALES BY PRODUCT & FLAVOR\nProduct,Quantity Sold,Revenue (KSh)\n';
     Object.keys(itemTotals).forEach(function(item) { csv += '"' + item + '",' + itemTotals[item].qty + ',' + itemTotals[item].revenue.toFixed(2) + '\n'; });
-    csv += '\nITEMIZED ORDERS\nDate,Order ID,Customer Phone,Item,Quantity,Order Type,Delivery Destination,Unit Price (KSh),Total (KSh),Status\n';
+    csv += '\nITEMIZED ORDERS\nDate,Order ID,Customer Phone,Item,Flavor,Quantity,Order Type,Delivery Destination,Unit Price (KSh),Total (KSh),Status\n';
     orders.forEach(function(order) {
         const unitPrice = order.qty > 0 ? (parseFloat(order.total) / parseInt(order.qty)).toFixed(2) : '0.00';
-        csv += ['"' + order.date + '"', '"' + order.id + '"', '"' + order.phone + '"', '"' + order.item + '"', order.qty, order.type, '"' + (order.destination || 'N/A') + '"', unitPrice, parseFloat(order.total).toFixed(2), order.status].join(',') + '\n';
+        csv += ['"' + order.date + '"', '"' + order.id + '"', '"' + order.phone + '"', '"' + order.item + '"', '"' + (order.flavor || 'N/A') + '"', order.qty, order.type, '"' + (order.destination || 'N/A') + '"', unitPrice, parseFloat(order.total).toFixed(2), order.status].join(',') + '\n';
     });
     csv += '\nGRAND TOTAL,' + totalRevenue.toFixed(2) + '\n\nGenerated by JENGA WEB - We build, you grow.\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -349,7 +388,11 @@ function renderDashboardProducts() {
     container.innerHTML = products.map(prod => `
         <div class="dash-product-item">
             <img src="${prod.image}" alt="${prod.name}" onerror="this.src='https://via.placeholder.com/60?text=No+Img'">
-            <div class="dash-product-info"><h4>${prod.name} - KSh ${prod.price}</h4><p>${prod.desc} ${prod.offer ? `| <strong>${prod.offer}</strong>` : ''}</p></div>
+            <div class="dash-product-info">
+                <h4>${prod.name} - KSh ${prod.price}</h4>
+                <p>${prod.desc} ${prod.offer ? `| <strong>${prod.offer}</strong>` : ''}</p>
+                ${prod.flavors && prod.flavors.length > 0 ? `<p style="margin-top: 5px;"><strong>Flavors:</strong> ${prod.flavors.map(f => `<span class="flavor-tag" style="font-size: 0.65rem;">${f}</span>`).join(' ')}</p>` : ''}
+            </div>
             <div class="dash-actions"><button class="btn-icon edit" onclick="editProduct('${prod.id}')">✏️</button><button class="btn-icon delete" onclick="deleteProduct('${prod.id}')">🗑️</button></div>
         </div>
     `).join('');
@@ -362,12 +405,14 @@ async function saveProduct() {
     const price = document.getElementById('prodPrice').value.trim();
     const desc = document.getElementById('prodDesc').value.trim();
     const offer = document.getElementById('prodOffer').value.trim();
+    const flavorsRaw = document.getElementById('prodFlavors').value.trim();
+    const flavors = flavorsRaw ? flavorsRaw.split(',').map(f => f.trim()).filter(f => f.length > 0) : [];
     if (!name || !price) { alert('Please enter at least a product name and price.'); return; }
     let products = getProducts();
     let imageUrl = base64Image;
     if (!imageUrl) { if (editingProductId) { const existing = products.find(p => p.id === editingProductId); if (existing) imageUrl = existing.image; } else { imageUrl = 'https://via.placeholder.com/300x200?text=Sweet+Haven'; } }
-    if (editingProductId) { const index = products.findIndex(p => p.id === editingProductId); if (index !== -1) { products[index] = { ...products[index], name, price: Number(price), desc, offer, image: imageUrl }; } }
-    else { const newId = 'p' + Date.now(); products.push({ id: newId, name, price: Number(price), desc, offer, image: imageUrl }); }
+    if (editingProductId) { const index = products.findIndex(p => p.id === editingProductId); if (index !== -1) { products[index] = { ...products[index], name, price: Number(price), desc, offer, flavors, image: imageUrl }; } }
+    else { const newId = 'p' + Date.now(); products.push({ id: newId, name, price: Number(price), desc, offer, flavors, image: imageUrl }); }
     await saveProductsToCloud(products);
     clearForm(); renderDashboardProducts(); renderStoreProducts(products);
     alert('✅ Product saved to cloud! Customers will see this update.');
@@ -378,6 +423,7 @@ function editProduct(id) {
     editingProductId = id; document.getElementById('formTitle').innerText = 'Edit Product';
     document.getElementById('prodName').value = prod.name; document.getElementById('prodPrice').value = prod.price;
     document.getElementById('prodDesc').value = prod.desc; document.getElementById('prodOffer').value = prod.offer || '';
+    document.getElementById('prodFlavors').value = (prod.flavors || []).join(', ');
     const preview = document.getElementById('imagePreview'); preview.src = prod.image; preview.style.display = 'block'; base64Image = '';
     document.querySelector('.manager-form').scrollIntoView({ behavior: 'smooth' });
 }
@@ -394,6 +440,7 @@ function clearForm() {
     editingProductId = null; document.getElementById('formTitle').innerText = 'Add New Product';
     document.getElementById('prodName').value = ''; document.getElementById('prodPrice').value = '';
     document.getElementById('prodDesc').value = ''; document.getElementById('prodOffer').value = '';
+    document.getElementById('prodFlavors').value = '';
     document.getElementById('prodImage').value = ''; document.getElementById('imagePreview').style.display = 'none';
     base64Image = '';
 }
