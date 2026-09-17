@@ -5,8 +5,6 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
 body { background-color: var(--white); color: var(--text-dark); line-height: 1.6; overflow-x: hidden; }
-
-/* NAVBAR & HERO */
 .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .nav-logo { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--deep-pink); }
 .nav-links { display: flex; gap: 15px; align-items: center; }
@@ -20,8 +18,6 @@ body { background-color: var(--white); color: var(--text-dark); line-height: 1.6
 .hero-subtitle { font-size: 1rem; color: var(--light-blue); margin-bottom: 20px; }
 .hero-price-badge { background: rgba(255, 255, 255, 0.15); padding: 10px 20px; border-radius: 20px; display: inline-block; margin-bottom: 30px; font-weight: 600; font-size: 0.9rem; backdrop-filter: blur(5px); }
 .hero-buttons { display: flex; flex-direction: column; gap: 15px; max-width: 300px; margin: 0 auto; }
-
-/* BUTTONS & SECTIONS */
 .btn { display: inline-block; padding: 14px 25px; border-radius: 50px; text-decoration: none; font-weight: 600; text-align: center; transition: all 0.3s ease; border: none; cursor: pointer; font-size: 1rem; }
 .btn:active { transform: scale(0.97); }
 .btn-primary { background-color: var(--deep-pink); color: var(--white); box-shadow: 0 5px 15px rgba(216, 27, 96, 0.4); }
@@ -31,8 +27,6 @@ body { background-color: var(--white); color: var(--text-dark); line-height: 1.6
 .section { padding: 60px 20px; }
 .section-title { text-align: center; font-family: 'Fredoka One', cursive; font-size: 2rem; color: var(--deep-pink); margin-bottom: 10px; }
 .section-subtitle { text-align: center; margin-bottom: 40px; color: #666; font-size: 0.95rem; }
-
-/* PRODUCTS */
 .product-grid { display: flex; flex-direction: column; gap: 25px; max-width: 500px; margin: 0 auto; }
 .product-card { background: var(--white); border-radius: 25px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; border: 1px solid #f0f0f0; position: relative; transition: transform 0.3s; display: flex; flex-direction: column; }
 .product-card:hover { transform: translateY(-5px); }
@@ -44,8 +38,6 @@ body { background-color: var(--white); color: var(--text-dark); line-height: 1.6
 .offer-tag { display: inline-block; background: #fff3cd; color: #856404; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px; border: 1px dashed #ffc107; }
 .btn-order { background-color: var(--dark-blue); color: var(--white); width: 100%; }
 .btn-order:hover { background-color: var(--deep-pink); }
-
-/* BANNER, FEATURES, LOCATION */
 .combo-banner { background: linear-gradient(135deg, var(--bright-pink) 0%, var(--deep-pink) 100%); border-radius: 30px; padding: 40px 20px; text-align: center; color: var(--white); max-width: 500px; margin: 0 auto; box-shadow: 0 15px 30px rgba(216, 27, 96, 0.3); }
 .combo-banner h2 { font-family: 'Fredoka One', cursive; font-size: 2rem; margin-bottom: 10px; }
 .combo-banner p { margin-bottom: 25px; font-size: 1rem; }
@@ -62,8 +54,6 @@ body { background-color: var(--white); color: var(--text-dark); line-height: 1.6
 .social-btn { background: rgba(255,255,255,0.1); color: var(--white); padding: 10px 20px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2); }
 footer { background-color: #0d1440; color: #888; text-align: center; padding: 30px 20px; font-size: 0.8rem; }
 footer strong { color: var(--bright-pink); }
-
-/* MODALS */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 20px; }
 .modal-content { background: var(--white); padding: 30px; border-radius: 25px; width: 100%; max-width: 400px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
 @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -79,8 +69,6 @@ footer strong { color: var(--bright-pink); }
 .radio-group { display: flex; gap: 15px; }
 .radio-label { display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer; }
 .total-box { background: #fff5f8; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; color: var(--deep-pink); border: 1px dashed var(--bright-pink); }
-
-/* OWNER DASHBOARD & TABS */
 .owner-nav { background: var(--dark-blue); }
 .owner-nav .nav-logo { color: var(--white); }
 .owner-container { padding: 40px 20px; max-width: 1000px; margin: 0 auto; min-height: 80vh; }
@@ -103,8 +91,6 @@ footer strong { color: var(--bright-pink); }
 .status-completed { background: #d4edda; color: #155724; }
 .action-btn { background: var(--dark-blue); color: var(--white); border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; }
 .action-btn:hover { background: var(--deep-pink); }
-
-/* PRODUCT MANAGER LAYOUT */
 .product-manager-layout { display: flex; flex-direction: column; gap: 30px; }
 .manager-form { background: var(--white); padding: 25px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 .manager-form h3 { margin-bottom: 15px; color: var(--dark-blue); font-family: 'Fredoka One', cursive; }
@@ -119,8 +105,6 @@ footer strong { color: var(--bright-pink); }
 .btn-icon { background: #eee; border: none; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 1rem; }
 .btn-icon.edit { color: var(--dark-blue); }
 .btn-icon.delete { color: #e53935; }
-
-/* DESKTOP */
 @media (min-width: 768px) {
     .product-grid { flex-direction: row; max-width: 800px; flex-wrap: wrap; justify-content: center; }
     .product-card { flex: 1; min-width: 250px; max-width: 350px; }

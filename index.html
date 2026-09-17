@@ -37,8 +37,6 @@
         <section id="products" class="section">
             <h2 class="section-title">Our Signature Treats</h2>
             <p class="section-subtitle">Handcrafted with love and premium ingredients.</p>
-            
-            <!-- Products are now injected dynamically by JavaScript -->
             <div id="productGrid" class="product-grid"></div>
         </section>
 
@@ -102,20 +100,17 @@
                 <button onclick="exportCSV()" class="btn btn-dark" style="padding: 10px 20px; font-size: 0.9rem;">📥 Export Orders CSV</button>
             </div>
 
-            <!-- Dashboard Tabs -->
             <div class="dashboard-tabs">
                 <button onclick="showTab('ordersTab')" id="btnOrders" class="tab-btn active">Orders</button>
                 <button onclick="showTab('productsTab')" id="btnProducts" class="tab-btn">Manage Products</button>
             </div>
 
-            <!-- TAB 1: ORDERS -->
             <div id="ordersTab" class="tab-content">
                 <div class="stats-grid">
                     <div class="stat-card"><h4>Total Revenue</h4><p id="statRevenue">KSh 0</p></div>
                     <div class="stat-card"><h4>Total Orders</h4><p id="statOrders">0</p></div>
                     <div class="stat-card"><h4>Pending Orders</h4><p id="statPending">0</p></div>
                 </div>
-
                 <div class="table-wrapper">
                     <table class="orders-table">
                         <thead>
@@ -126,10 +121,8 @@
                 </div>
             </div>
 
-            <!-- TAB 2: MANAGE PRODUCTS -->
             <div id="productsTab" class="tab-content" style="display: none;">
                 <div class="product-manager-layout">
-                    <!-- Add/Edit Form -->
                     <div class="manager-form">
                         <h3 id="formTitle">Add New Product</h3>
                         <input type="hidden" id="editProductId">
@@ -146,7 +139,6 @@
                         <button onclick="clearForm()" class="btn btn-outline" style="width: 100%; margin-top: 5px; border-color: #ccc; color: #666;">Cancel / Clear</button>
                     </div>
 
-                    <!-- Product List -->
                     <div class="manager-list">
                         <h3>Current Products</h3>
                         <div id="dashboardProductList"></div>
@@ -156,7 +148,6 @@
         </div>
     </div>
 
-    <!-- ORDER MODAL -->
     <div id="orderModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeOrderModal()">&times;</span>
