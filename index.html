@@ -106,7 +106,6 @@
                 <button onclick="showTab('productsTab')" id="btnProducts" class="tab-btn">Manage Products</button>
             </div>
 
-            <!-- ORDERS TAB -->
             <div id="ordersTab" class="tab-content">
                 <div class="stats-grid">
                     <div class="stat-card"><h4>Total Revenue</h4><p id="statRevenue">KSh 0</p></div>
@@ -127,7 +126,6 @@
                 </div>
             </div>
 
-            <!-- PRODUCTS TAB -->
             <div id="productsTab" class="tab-content" style="display: none;">
                 <div class="product-manager-layout">
                     <div class="manager-form">
@@ -137,11 +135,18 @@
                         <div class="form-group"><label>Price (KSh)</label><input type="number" id="prodPrice" class="form-input" placeholder="e.g., 150"></div>
                         <div class="form-group"><label>Description</label><input type="text" id="prodDesc" class="form-input" placeholder="Short description"></div>
                         <div class="form-group"><label>Offer (Optional)</label><input type="text" id="prodOffer" class="form-input" placeholder="e.g., 20% OFF"></div>
+
+                        <!-- FLAVOR MANAGER -->
                         <div class="form-group">
-                            <label>Flavors (comma separated, optional)</label>
-                            <input type="text" id="prodFlavors" class="form-input" placeholder="e.g., Strawberry, Chocolate, Vanilla">
-                            <small style="color: #a17a8b; font-size: 0.75rem; display: block; margin-top: 5px;">Separate with commas. Leave empty if only one option.</small>
+                            <label>🍬 Flavors (Add as many as you want)</label>
+                            <div class="flavor-input-row">
+                                <input type="text" id="flavorInput" class="form-input" placeholder="e.g., Strawberry">
+                                <button type="button" onclick="addFlavorTag()" class="btn-add-flavor">+ Add</button>
+                            </div>
+                            <div id="flavorManagerList" class="flavor-manager-list"></div>
+                            <small class="flavor-hint">Customers will pick one flavor when ordering</small>
                         </div>
+
                         <div class="form-group">
                             <label>Attach Photo (Max 1)</label>
                             <input type="file" id="prodImage" accept="image/*" class="form-input" onchange="previewImage(event)">
@@ -166,7 +171,7 @@
             <h2 style="color: var(--deep-pink); margin-bottom: 5px;">Complete Your Order</h2>
             <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Fill in the details to generate your receipt.</p>
             <div class="form-group"><label>Product:</label><input type="text" id="modalProductName" class="form-input" readonly></div>
-            
+
             <div class="form-group" id="flavorGroup" style="display: none;">
                 <label>🍬 Choose Your Flavor:</label>
                 <div id="flavorOptions" class="flavor-options"></div>
@@ -201,6 +206,19 @@
             <div class="thank-you-summary" id="thankYouSummary"></div>
             <button onclick="sendWhatsAppFromThankYou()" class="btn btn-whatsapp" style="width: 100%; margin-top: 20px;">🟢 Send Order to WhatsApp</button>
             <button onclick="closeThankYou()" class="btn btn-outline" style="width: 100%; margin-top: 10px; border-color: #ddd; color: #888;">Close</button>
+        </div>
+    </div>
+
+    <!-- PAYMENT CELEBRATION OVERLAY -->
+    <div id="paymentCelebration" class="payment-celebration">
+        <div class="confetti-container" id="confettiContainer"></div>
+        <div class="celebration-center">
+            <div class="celebration-ring"></div>
+            <div class="celebration-check">✓</div>
+            <h2 class="celebration-title">Order Sent!</h2>
+            <p class="celebration-subtitle">Your sweet treat is on its way 🍭</p>
+            <div class="celebration-progress"><div class="celebration-progress-fill"></div></div>
+            <p class="celebration-note">Opening WhatsApp...</p>
         </div>
     </div>
 

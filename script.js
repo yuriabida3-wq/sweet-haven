@@ -14,6 +14,7 @@ let currentOrderMessage = '';
 let currentOrderWhatsApp = '';
 let bulkQueue = [];
 let bulkIndex = 0;
+let editingFlavors = []; // Array of flavors being edited in the form
 
 const defaultProducts = [
     { id: 'p1', name: 'Mini Cup', price: 100, desc: 'Small & sweet, perfect for a quick treat.', image: 'https://images.unsplash.com/photo-1575224300306-1b8da36134ec?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', offer: 'Best Seller', flavors: ['Strawberry', 'Vanilla', 'Bubblegum'] },
@@ -28,10 +29,7 @@ async function loadProductsFromCloud() {
         });
         const data = await res.json();
         let products = (data.record && data.record.products) ? data.record.products : [];
-        if (products.length === 0) {
-            products = defaultProducts;
-            await saveProductsToCloud(products);
-        }
+        if (products.length === 0) { products = defaultProducts; await saveProductsToCloud(products); }
         localStorage.setItem('sweetHavenProducts', JSON.stringify(products));
         return products;
     } catch (e) {
@@ -68,6 +66,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
+    // Enter key adds flavor in the manager
+    const flavorInput = document.getElementById('flavorInput');
+    if (flavorInput) {
+        flavorInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); addFlavorTag(); }
+        });
+    }
 });
 
 function spawnCandyBackground() {
@@ -125,7 +130,6 @@ function openOrderModal(productName, price, flavors) {
     document.getElementById('destinationGroup').style.display = 'none';
     document.querySelector('input[name="orderType"][value="Pickup"]').checked = true;
 
-    // Handle flavor chips
     const flavorGroup = document.getElementById('flavorGroup');
     const flavorOptions = document.getElementById('flavorOptions');
     if (flavors && flavors.length > 0) {
@@ -138,7 +142,6 @@ function openOrderModal(productName, price, flavors) {
         flavorGroup.style.display = 'none';
         flavorOptions.innerHTML = '';
     }
-
     updateTotal();
     document.getElementById('orderModal').style.display = 'flex';
 }
@@ -147,7 +150,6 @@ function selectFlavor(flavor, btn) {
     currentFlavor = flavor;
     document.querySelectorAll('.flavor-chip').forEach(c => c.classList.remove('selected', 'sparkling'));
     btn.classList.add('selected', 'sparkling');
-    // remove sparkle class after animation
     setTimeout(() => btn.classList.remove('sparkling'), 800);
 }
 
@@ -178,38 +180,96 @@ function submitOrder() {
     orders.push({ id: receiptId, phone: phone, item: currentProduct.name, flavor: currentFlavor, qty: qty, type: orderType, destination: destination, total: total, status: 'Pending', date: new Date().toLocaleString() });
     localStorage.setItem('sweetHavenOrders', JSON.stringify(orders));
 
-    currentOrderMessage = message;
     currentOrderWhatsApp = `https://wa.me/254740503058?text=${encodeURIComponent(message)}`;
     closeOrderModal();
-    showThankYou({ id: receiptId, item: currentProduct.name, flavor: currentFlavor, qty: qty, type: orderType, total: total, destination: destination });
+
+    // PLAY CELEBRATION ANIMATION, THEN OPEN WHATSAPP
+    playPaymentCelebration();
+    setTimeout(() => {
+        window.open(currentOrderWhatsApp, '_blank');
+    }, 2400); // opens after celebration is mostly done
 }
 
-function showThankYou(order) {
-    const summary = document.getElementById('thankYouSummary');
-    summary.innerHTML = `<strong>Order ID:</strong> ${order.id}<br><strong>Item:</strong> ${order.item}${order.flavor ? ' — ' + order.flavor : ''}<br><strong>Quantity:</strong> ${order.qty}<br><strong>Type:</strong> ${order.type}${order.destination ? '<br><strong>Destination:</strong> ' + order.destination : ''}<br><strong>Total:</strong> KSh ${order.total}`;
-    const rain = document.getElementById('candyRain');
-    rain.innerHTML = '';
-    const candies = ['🍭', '🍬', '🍫', '🧁', '🍩', '💗', '✨', '🎉'];
-    for (let i = 0; i < 20; i++) {
+// ============ PAYMENT CELEBRATION ============
+function playPaymentCelebration() {
+    const overlay = document.getElementById('paymentCelebration');
+    const container = document.getElementById('confettiContainer');
+    container.innerHTML = '';
+    const emojis = ['🍭', '🍬', '🍫', '🧁', '🍩', '💗', '✨', '🎉', '🎊', '💖', '🩷', '🍪'];
+    // Confetti falling
+    for (let i = 0; i < 60; i++) {
         const c = document.createElement('div');
-        c.className = 'candy-fall';
-        c.innerText = candies[Math.floor(Math.random() * candies.length)];
+        c.className = 'confetti-piece';
+        c.innerText = emojis[Math.floor(Math.random() * emojis.length)];
         c.style.left = Math.random() * 100 + '%';
-        c.style.animationDelay = Math.random() * 2 + 's';
-        c.style.animationDuration = (2 + Math.random() * 2) + 's';
-        rain.appendChild(c);
+        c.style.animationDelay = Math.random() * 1.5 + 's';
+        c.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+        c.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+        container.appendChild(c);
     }
-    document.getElementById('thankYouModal').style.display = 'flex';
+    // Emoji burst around checkmark
+    const burstEmojis = ['✨', '💖', '🍭', '🎉', '🍬', '💕', '⭐', '🌟'];
+    burstEmojis.forEach((em, i) => {
+        const b = document.createElement('div');
+        b.className = 'celebration-burst';
+        b.innerText = em;
+        const angle = (i / burstEmojis.length) * Math.PI * 2;
+        const dist = 130;
+        b.style.setProperty('--bx', Math.cos(angle) * dist * 0.6 + 'px');
+        b.style.setProperty('--by', Math.sin(angle) * dist * 0.6 + 'px');
+        b.style.setProperty('--bx2', Math.cos(angle) * dist + 'px');
+        b.style.setProperty('--by2', Math.sin(angle) * dist + 'px');
+        b.style.animationDelay = '0.6s';
+        document.querySelector('.celebration-center').appendChild(b);
+        setTimeout(() => b.remove(), 2200);
+    });
+    overlay.classList.add('active');
+    // Fade out after animation
+    setTimeout(() => {
+        overlay.classList.remove('active');
+        document.getElementById('thankYouModal').style.display = 'flex';
+    }, 2600);
 }
 
 function sendWhatsAppFromThankYou() { if (currentOrderWhatsApp) window.open(currentOrderWhatsApp, '_blank'); }
 function closeThankYou() { document.getElementById('thankYouModal').style.display = 'none'; }
 
+// ============ OWNER DASHBOARD ============
 function showOwnerLogin() { document.getElementById('publicSite').style.display = 'none'; document.getElementById('ownerSite').style.display = 'block'; document.getElementById('ownerLoginBox').style.display = 'block'; document.getElementById('ownerDashboardBox').style.display = 'none'; window.scrollTo(0, 0); }
 function loginOwner() { const pass = document.getElementById('ownerPassword').value; if (pass === 'admin123') { document.getElementById('ownerLoginBox').style.display = 'none'; document.getElementById('ownerDashboardBox').style.display = 'block'; renderOwnerOrders(); renderDashboardProducts(); } else { alert('Incorrect Password. Hint: admin123'); } }
 function logoutOwner() { document.getElementById('ownerSite').style.display = 'none'; document.getElementById('publicSite').style.display = 'block'; document.getElementById('ownerPassword').value = ''; window.scrollTo(0, 0); }
 function showTab(tabId) { document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none'); document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(tabId).style.display = 'block'; document.getElementById(tabId === 'ordersTab' ? 'btnOrders' : 'btnProducts').classList.add('active'); }
 
+// ============ FLAVOR MANAGER (Owner Form) ============
+function addFlavorTag() {
+    const input = document.getElementById('flavorInput');
+    const val = input.value.trim();
+    if (!val) return;
+    if (editingFlavors.includes(val)) { alert('That flavor is already added.'); return; }
+    editingFlavors.push(val);
+    input.value = '';
+    input.focus();
+    renderFlavorTags();
+}
+
+function removeFlavorTag(index) {
+    editingFlavors.splice(index, 1);
+    renderFlavorTags();
+}
+
+function renderFlavorTags() {
+    const list = document.getElementById('flavorManagerList');
+    if (!list) return;
+    if (editingFlavors.length === 0) {
+        list.innerHTML = '<small style="color: #bbb; font-style: italic;">No flavors added yet</small>';
+        return;
+    }
+    list.innerHTML = editingFlavors.map((f, i) =>
+        `<span class="flavor-manager-tag">${f}<button type="button" onclick="removeFlavorTag(${i})" title="Remove">×</button></span>`
+    ).join('');
+}
+
+// ============ ORDERS ============
 function formatKenyanPhone(phone) {
     let cleaned = phone.replace(/\D/g, '');
     if (cleaned.startsWith('0')) return '254' + cleaned.substring(1);
@@ -391,7 +451,7 @@ function renderDashboardProducts() {
             <div class="dash-product-info">
                 <h4>${prod.name} - KSh ${prod.price}</h4>
                 <p>${prod.desc} ${prod.offer ? `| <strong>${prod.offer}</strong>` : ''}</p>
-                ${prod.flavors && prod.flavors.length > 0 ? `<p style="margin-top: 5px;"><strong>Flavors:</strong> ${prod.flavors.map(f => `<span class="flavor-tag" style="font-size: 0.65rem;">${f}</span>`).join(' ')}</p>` : ''}
+                ${prod.flavors && prod.flavors.length > 0 ? `<div style="margin-top: 6px;">${prod.flavors.map(f => `<span class="flavor-manager-tag" style="font-size: 0.65rem; padding: 4px 8px;">${f}</span>`).join(' ')}</div>` : ''}
             </div>
             <div class="dash-actions"><button class="btn-icon edit" onclick="editProduct('${prod.id}')">✏️</button><button class="btn-icon delete" onclick="deleteProduct('${prod.id}')">🗑️</button></div>
         </div>
@@ -405,14 +465,15 @@ async function saveProduct() {
     const price = document.getElementById('prodPrice').value.trim();
     const desc = document.getElementById('prodDesc').value.trim();
     const offer = document.getElementById('prodOffer').value.trim();
-    const flavorsRaw = document.getElementById('prodFlavors').value.trim();
-    const flavors = flavorsRaw ? flavorsRaw.split(',').map(f => f.trim()).filter(f => f.length > 0) : [];
     if (!name || !price) { alert('Please enter at least a product name and price.'); return; }
     let products = getProducts();
     let imageUrl = base64Image;
     if (!imageUrl) { if (editingProductId) { const existing = products.find(p => p.id === editingProductId); if (existing) imageUrl = existing.image; } else { imageUrl = 'https://via.placeholder.com/300x200?text=Sweet+Haven'; } }
-    if (editingProductId) { const index = products.findIndex(p => p.id === editingProductId); if (index !== -1) { products[index] = { ...products[index], name, price: Number(price), desc, offer, flavors, image: imageUrl }; } }
-    else { const newId = 'p' + Date.now(); products.push({ id: newId, name, price: Number(price), desc, offer, flavors, image: imageUrl }); }
+    if (editingProductId) {
+        const index = products.findIndex(p => p.id === editingProductId);
+        if (index !== -1) { products[index] = { ...products[index], name, price: Number(price), desc, offer, flavors: [...editingFlavors], image: imageUrl }; }
+    }
+    else { const newId = 'p' + Date.now(); products.push({ id: newId, name, price: Number(price), desc, offer, flavors: [...editingFlavors], image: imageUrl }); }
     await saveProductsToCloud(products);
     clearForm(); renderDashboardProducts(); renderStoreProducts(products);
     alert('✅ Product saved to cloud! Customers will see this update.');
@@ -420,10 +481,12 @@ async function saveProduct() {
 
 function editProduct(id) {
     const products = getProducts(); const prod = products.find(p => p.id === id); if (!prod) return;
-    editingProductId = id; document.getElementById('formTitle').innerText = 'Edit Product';
+    editingProductId = id;
+    document.getElementById('formTitle').innerText = 'Edit Product';
     document.getElementById('prodName').value = prod.name; document.getElementById('prodPrice').value = prod.price;
     document.getElementById('prodDesc').value = prod.desc; document.getElementById('prodOffer').value = prod.offer || '';
-    document.getElementById('prodFlavors').value = (prod.flavors || []).join(', ');
+    editingFlavors = [...(prod.flavors || [])];
+    renderFlavorTags();
     const preview = document.getElementById('imagePreview'); preview.src = prod.image; preview.style.display = 'block'; base64Image = '';
     document.querySelector('.manager-form').scrollIntoView({ behavior: 'smooth' });
 }
@@ -437,10 +500,19 @@ async function deleteProduct(id) {
 }
 
 function clearForm() {
-    editingProductId = null; document.getElementById('formTitle').innerText = 'Add New Product';
+    editingProductId = null;
+    editingFlavors = [];
+    document.getElementById('formTitle').innerText = 'Add New Product';
     document.getElementById('prodName').value = ''; document.getElementById('prodPrice').value = '';
     document.getElementById('prodDesc').value = ''; document.getElementById('prodOffer').value = '';
-    document.getElementById('prodFlavors').value = '';
+    document.getElementById('flavorInput').value = '';
     document.getElementById('prodImage').value = ''; document.getElementById('imagePreview').style.display = 'none';
+    renderFlavorTags();
     base64Image = '';
 }
+
+// Initialize flavor tag list on load
+document.addEventListener('DOMContentLoaded', () => {
+    const list = document.getElementById('flavorManagerList');
+    if (list) renderFlavorTags();
+});

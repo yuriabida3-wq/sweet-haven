@@ -343,3 +343,187 @@ footer strong { color: #fff; }
 
 /* Thank you icon extra magic */
 .thank-you-icon { text-shadow: 0 0 20px rgba(255, 128, 171, 0.8); }
+
+/* ============ FLAVOR MANAGER (Owner Form) ============ */
+.flavor-input-row { display: flex; gap: 8px; align-items: stretch; }
+.flavor-input-row .form-input { flex: 1; }
+.btn-add-flavor {
+    background: linear-gradient(135deg, #ff80ab, #d81b60);
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 12px rgba(216, 27, 96, 0.25);
+}
+.btn-add-flavor:active { transform: scale(0.95); }
+.flavor-manager-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; min-height: 10px; }
+.flavor-manager-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #ffe4ec, #ffc9dd);
+    color: var(--deep-pink);
+    padding: 8px 12px 8px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 2px solid #ff80ab;
+    animation: tagSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+@keyframes tagSlideIn {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.flavor-manager-tag button {
+    background: rgba(216, 27, 96, 0.15);
+    border: none;
+    color: var(--deep-pink);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+.flavor-manager-tag button:hover { background: var(--deep-pink); color: white; transform: rotate(90deg); }
+.flavor-hint { color: #a17a8b; font-size: 0.72rem; display: block; margin-top: 8px; font-style: italic; }
+
+/* ============ PAYMENT CELEBRATION ANIMATION ============ */
+.payment-celebration {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle at center, #fff5f8 0%, #ffc9dd 100%);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.payment-celebration.active { display: flex; }
+.confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.confetti-piece {
+    position: absolute;
+    top: -50px;
+    font-size: 1.8rem;
+    animation: confettiFall 3s linear forwards;
+    will-change: transform;
+}
+@keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(105vh) rotate(720deg); opacity: 0.8; }
+}
+.celebration-center { text-align: center; position: relative; z-index: 2; padding: 20px; }
+.celebration-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px; height: 180px;
+    border: 4px solid transparent;
+    border-top-color: #d81b60;
+    border-right-color: #ff80ab;
+    border-radius: 50%;
+    animation: ringSpin 1.2s linear infinite;
+    opacity: 0.7;
+}
+@keyframes ringSpin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.celebration-check {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff80ab, #d81b60);
+    color: white;
+    font-size: 70px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 25px;
+    box-shadow: 0 10px 40px rgba(216, 27, 96, 0.5), 0 0 60px rgba(255, 128, 171, 0.6);
+    animation: checkBounce 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    position: relative;
+    z-index: 3;
+}
+@keyframes checkBounce {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.celebration-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.5rem;
+    color: var(--deep-pink);
+    margin-bottom: 10px;
+    animation: titlePop 0.6s ease-out 0.4s backwards;
+    text-shadow: 0 3px 10px rgba(216, 27, 96, 0.2);
+}
+@keyframes titlePop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.celebration-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    margin-bottom: 25px;
+    animation: subtitleFade 0.6s ease-out 0.7s backwards;
+}
+@keyframes subtitleFade {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+.celebration-progress {
+    width: 220px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    margin: 0 auto 15px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 5px rgba(216, 27, 96, 0.15);
+}
+.celebration-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff80ab, #d81b60);
+    border-radius: 8px;
+    animation: progressFill 2s ease-out forwards;
+}
+@keyframes progressFill {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+.celebration-note {
+    color: #a17a8b;
+    font-size: 0.85rem;
+    animation: notePulse 1.5s ease-in-out infinite;
+}
+@keyframes notePulse {
+    0%,100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+/* Emoji burst around checkmark */
+.celebration-burst {
+    position: absolute;
+    top: 50%; left: 50%;
+    font-size: 2rem;
+    pointer-events: none;
+    animation: burstOut 1s ease-out forwards;
+    z-index: 4;
+}
+@keyframes burstOut {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    50% { transform: translate(calc(-50% + var(--bx)), calc(-50% + var(--by))) scale(1.3); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--bx2)), calc(-50% + var(--by2))) scale(0.5); opacity: 0; }
+}
